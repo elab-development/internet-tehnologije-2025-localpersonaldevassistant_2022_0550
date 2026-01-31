@@ -17,3 +17,5 @@ class Message(Base):
     
     #Relacija sa File tabelom (one-to-many) - opciono, za kasnije
     files = relationship("File", back_populates="message", cascade="all, delete-orphan")
+    #Relacija sa Mode tabelom
+    mode = relationship("Mode", back_populates="messages")

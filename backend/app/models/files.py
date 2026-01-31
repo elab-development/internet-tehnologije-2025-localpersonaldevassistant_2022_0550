@@ -12,7 +12,7 @@ message_documents = Table(
 )
 
 class Document(Base):
-    __tablename__ = "documents"
+    __tablename__ = "files"
     
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)  
