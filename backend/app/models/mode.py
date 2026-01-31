@@ -1,11 +1,13 @@
-# backend/app/models/assistant_type.py
+from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy.orm import relationship
+from app.database import Base
+
 class Mode(Base):
-    __tablename__ = "mode"
+    __tablename__ = "modes"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)  
-    description = Column(Text, nullable=True) 
-     
+    description = Column(Text, nullable=True)  
     
-    # Relacija sa Chat tabelom 
-    chats = relationship("Chat", back_populates="assistant_type")
+    # Relacija sa Message tabelom (one-to-many)
+    messages = relationship("Message", back_populates="mode")
