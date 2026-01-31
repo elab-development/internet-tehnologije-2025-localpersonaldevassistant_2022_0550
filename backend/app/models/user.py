@@ -9,7 +9,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=False)
     password = Column(String, nullable=False)  # Hashovan password (bcrypt)
-    role_id = Column(String, ForeignKey("user_roles.id"), default="standard_user")
+    role_id = Column(String, ForeignKey("user_roles.id"), default="standard_user", nullable=False)
     
     #relacija sa UserRole tabelom
     role = relationship("UserRole", back_populates="users")

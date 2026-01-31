@@ -8,14 +8,16 @@ class Message(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(Integer, ForeignKey("chats.id"), nullable=False)
-    content = Column(Text, nullable=False)  
+    content = Column(Text, nullable=False)
     role = Column(String, nullable=False)  
+    mode_id = Column(Integer, ForeignKey("modes.id"), nullable=True)  
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relacija sa Chat tabelom (many-to-one)
+   
     chat = relationship("Chat", back_populates="messages")
     
-    #Relacija sa File tabelom (one-to-many) - opciono, za kasnije
-    files = relationship("File", back_populates="message", cascade="all, delete-orphan")
-    #Relacija sa Mode tabelom
+    
     mode = relationship("Mode", back_populates="messages")
+    
+    
+    documents = relationship("Document", secondary="message_documents", back_populates="messages")
