@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Login from './components/LoginPage';
 import Register from './components/RegisterPage';
+import Chat from './components/Chat';
 import { isAuthenticated, getSavedUser, logout } from './api/auth';
 
 export default function App() {
@@ -10,22 +11,22 @@ export default function App() {
 
     // Auto-login
     useEffect(() => {
-        if (isAuthenticated()) {
-            const savedUser = getSavedUser();
-            if (savedUser) {
-                setUser(savedUser);
-            }
+        const savedUser = getSavedUser();
+        if (savedUser) {
+            setUser(savedUser);
         }
     }, []);
 
     // Login handler
     const handleLogin = (userData) => {
         setUser(userData);
+        setSelectedItem('Chat');
     };
 
     // Register handler
     const handleRegister = (userData) => {
         setUser(userData);
+        setSelectedItem('Chat');
     };
 
     // Logout handler
@@ -36,6 +37,8 @@ export default function App() {
 
     const renderPage = () => {
         switch (selectedItem) {
+            case 'Chat':
+                return <Chat/>
             case 'Login':
                 return <Login onLogin={handleLogin} onSwitchToRegister={() => setSelectedItem('Register')} />
             case 'Register':

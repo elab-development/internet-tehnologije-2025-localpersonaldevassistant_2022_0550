@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 
-export default function Sidebar({ onSelect, selected }) {
+export default function Sidebar({ onSelect, selected, user, onLogout }) {
 
     const navs = [
         { title: 'Copilot chat', image: '/logo.png' },
@@ -9,15 +9,21 @@ export default function Sidebar({ onSelect, selected }) {
         { title: 'Generate quiz', image: '/quiz.png' },
     ]
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const chats = [];
 
     return (
         <aside className="flex flex-col text-left w-1/5 h-full font-bold text-white text-2xl bg-neutral-900 border-r">
             {/* Profile */}
             <div className="w-full h-35 p-3 border-b">
-                {isLoggedIn ? (
-                    <div></div>
+                {user ? (
+                    <div className="flex-col">
+                        <p className="text-2xl">{user.full_name}</p>
+                        <p className="text-lg font-normal opacity-50">{user.email}</p>
+                        <div onClick={onLogout} className="mt-3 w-3/4 flex gap-1 items-center justify-center p-2 rounded-lg bg-zinc-600 cursor-pointer hover:bg-zinc-700 duration-200">
+                            <img className="w-5" src="./logout.png" alt="logout" />
+                            <p className="text-base">Logout</p>
+                        </div>
+                    </div>
                 ) : (
                     <div className="flex flex-col h-full w-full">
                         <div className="flex items-center gap-3 w-full h-1/2">
@@ -38,8 +44,16 @@ export default function Sidebar({ onSelect, selected }) {
                 )}
             </div>
 
+            {/* New chat */}
+            <div className="flex w-full h-20 p-3">
+                <div className="w-full h-full flex gap-3 items-center bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
+                    <img className="w-7" src="./newchat.png" alt="newchat" />
+                    <h2>New chat</h2>
+                </div>
+            </div>
+
             {/* Chat history */}
-            <div className="flex flex-col p-3">
+            <div className="flex flex-col pl-3">
                 <div className="flex items-center gap-3 w-full h-15 mb-3">
                     <img className="w-7" src="./chat-history.png" alt="chat-history" />
                     <h2>Chat history</h2>
