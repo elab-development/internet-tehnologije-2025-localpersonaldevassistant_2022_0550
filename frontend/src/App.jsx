@@ -3,7 +3,7 @@ import Sidebar from './components/Sidebar';
 import Login from './components/LoginPage';
 import Register from './components/RegisterPage';
 import Chat from './components/Chat';
-import { isAuthenticated, getSavedUser, logout } from './api/auth';
+import { getSavedUser, logout } from './api/auth';
 
 export default function App() {
     const [selectedItem, setSelectedItem] = useState('');

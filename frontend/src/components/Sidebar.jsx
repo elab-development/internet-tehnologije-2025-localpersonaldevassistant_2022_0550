@@ -46,7 +46,7 @@ export default function Sidebar({ onSelect, selected, user, onLogout }) {
 
             {/* New chat */}
             <div className="flex w-full h-20 p-3">
-                <div className="w-full h-full flex gap-3 items-center bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
+                <div onClick={() => onSelect('Chat')} className="w-full h-full flex gap-3 items-center bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
                     <img className="w-7" src="./newchat.png" alt="newchat" />
                     <h2>New chat</h2>
                 </div>
