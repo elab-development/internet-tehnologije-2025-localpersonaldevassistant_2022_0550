@@ -20,19 +20,20 @@ export default function App() {
     // Login handler
     const handleLogin = (userData) => {
         setUser(userData);
-        setSelectedItem('Chat');
+        setSelectedItem('WelcomePage');
     };
 
     // Register handler
     const handleRegister = (userData) => {
         setUser(userData);
-        setSelectedItem('Chat');
+        setSelectedItem('WelcomePage');
     };
 
     // Logout handler
     const handleLogout = () => {
         logout();
         setUser(null);
+        setSelectedItem('WelcomePage');
     };
 
     const renderPage = () => {
@@ -43,7 +44,7 @@ export default function App() {
                 return <Login onLogin={handleLogin} onSwitchToRegister={() => setSelectedItem('Register')} />
             case 'Register':
                 return <Register onRegister={handleRegister} onSwitchToLogin={() => setSelectedItem('Login')} />
-            default:
+            case 'WelcomePage':
                 return <div className="w-full h-full flex justify-center items-center font-bold text-3xl text-white">Welcome to Local Personal Dev Assistant</div>;
         }
     }
