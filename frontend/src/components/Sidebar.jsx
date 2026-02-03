@@ -1,30 +1,11 @@
 import { useState, useEffect } from "react";
 import { createChat, getChats } from "../api/message";
 
-export default function Sidebar({ onSelect, selected, user, onLogout }) {
+export default function Sidebar({ user, chats, setChats, onChatSelect, activeChatID, onLogout, onSelect }) {
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [chats, setChats] = useState([]);
 
-    const getAllUsersChats = async () => {
-        setError('');
-
-        try {
-            const data = await getChats();
-            setChats(data);
-            console.log(data);
-        } catch (error) {
-            console.error(error);
-            setError("Neuspešno uzimanje chatova");
-        }
-    }
-
-    useEffect(() => {
-        if (user) {
-            getAllUsersChats();
-        }
-    }, [user]);
 
     const handleCreateChat = async () => {
         setError('');
@@ -34,14 +15,13 @@ export default function Sidebar({ onSelect, selected, user, onLogout }) {
             const chat = await createChat();
             console.log(chat);
             setChats(prevChats => [chat, ...prevChats]);
+            onChatSelect(chat.id);
         } catch (error) {
             console.error(err);
             setError("Neuspešno kreiranje chata");
         } finally {
             setLoading(false);
         }
-
-        // onSelect('Chat');
     }
 
     return (
@@ -87,20 +67,27 @@ export default function Sidebar({ onSelect, selected, user, onLogout }) {
 
             {/* Chat history */}
             {user && (
-                <div className="flex flex-col pl-3 pr-3">
-                    <div className="flex items-center gap-3 w-full h-15">
+                <div className="flex flex-col pl-3 pr-3 overflow-hidden pb-3">
+                    <div className="flex items-center gap-3 w-full h-15 mb-1">
                         <img className="w-7" src="./chat-history.png" alt="chat-history" />
                         <h2>Chat history</h2>
                     </div>
                     {chats.length === 0 ? (
                         <p className="font-normal text-xl opacity-50">Chat history is empty.</p>
                     ) : (
-                        <div className="w-full flex flex-col gap-2">
-                            {chats.map(chat => (
-                                <div key={chat.id} className="flex items-center justify-baseline w-full bg-zinc-800 text-lg p-3 rounded-xl cursor-pointer hover:bg-zinc-700 duration-200">
-                                    {chat.title}
-                                </div>
-                            ))}
+                        <div className="w-full flex flex-col gap-2 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar">
+                            {chats.map(chat => {
+                                const isActive = chat.id === activeChatID;
+
+                                return (
+                                    <div key={chat.id} onClick={() => onChatSelect(chat.id)}
+                                        className={`flex items-center justify-baseline w-full text-lg p-3 rounded-xl cursor-pointer ${isActive ? 'bg-zinc-600' : 'bg-zinc-800 hover:bg-zinc-700 duration-200'}`}>
+                                        {chat.title.length > 25
+                                            ? chat.title.slice(0, 25) + "..."
+                                            : chat.title}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
