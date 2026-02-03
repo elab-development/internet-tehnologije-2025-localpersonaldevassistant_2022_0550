@@ -4,18 +4,24 @@ import Login from './components/LoginPage';
 import Register from './components/RegisterPage';
 import Chat from './components/Chat';
 import { getSavedUser, logout } from './api/auth';
+import { getChats } from './api/message';
 
 export default function App() {
     const [selectedItem, setSelectedItem] = useState('');
     const [user, setUser] = useState(null);
+    const [activeChatID, setActiveChatID] = useState(null);
+    const [chats, setChats] = useState([]);
 
-    // Auto-login
+    const fetchChats = async () => {
+        try {
+            const data = await getChats();
+            setChats(data);
+        } catch (error) { console.error(error); }
+    };
+
     useEffect(() => {
-        const savedUser = getSavedUser();
-        if (savedUser) {
-            setUser(savedUser);
-        }
-    }, []);
+        if (user) fetchChats();
+    }, [user]);
 
     // Login handler
     const handleLogin = (userData) => {
@@ -33,13 +39,23 @@ export default function App() {
     const handleLogout = () => {
         logout();
         setUser(null);
+        setActiveChatID(null);
         setSelectedItem('WelcomePage');
     };
 
+    const handleChatUpdated = (updatedChat) => {
+        setChats(prevChats =>
+            prevChats.map(c => c.id === updatedChat.id ? updatedChat : c)
+        );
+    };
+
     const renderPage = () => {
+
+        if (user && activeChatID) {
+            return <Chat chatId={activeChatID} onChatUpdated={handleChatUpdated} />
+        }
+
         switch (selectedItem) {
-            case 'Chat':
-                return <Chat/>
             case 'Login':
                 return <Login onLogin={handleLogin} onSwitchToRegister={() => setSelectedItem('Register')} />
             case 'Register':
@@ -51,7 +67,15 @@ export default function App() {
 
     return (
         <div className='flex w-screen h-screen bg-zinc-800'>
-            <Sidebar selected={selectedItem} onSelect={setSelectedItem} user={user} onLogout={handleLogout} />
+            <Sidebar
+                user={user}
+                chats={chats}
+                setChats={setChats}
+                onChatSelect={setActiveChatID}
+                activeChatID={activeChatID}
+                onLogout={handleLogout}
+                onSelect={setSelectedItem}
+            />
             <div className='w-4/5 h-full'>
                 {renderPage()}
             </div>

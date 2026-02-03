@@ -35,5 +35,14 @@ export const getChats = async () => {
     return response.data;
 }
 
+export const getChat = async (chat_id) => {
+    const response = await api.get(`chat/${chat_id}`);
+    return response.data;
+}
+
+export const updateChat = async (chat_id, title) => {
+    const response = await api.patch(`chat/${chat_id}`, { title });
+    return response.data;
+}
 
 export default api;
