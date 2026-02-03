@@ -21,7 +21,7 @@ export default function Chat(){
                     <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
                         <img className="w-7" src="./doc.png" alt="document" />
                     </div>
-                    <input className="w-4/5 h-15 rounded-2xl bg-zinc-600 pl-3 text-white text-lg outline-0" type="text" />
+                    <input className="w-4/5 h-15 rounded-2xl bg-zinc-600 pl-3 pr-3 text-white text-lg outline-0" type="text" />
                     <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
                         <img className="w-8" src="./mode.png" alt="send" />
                     </div>

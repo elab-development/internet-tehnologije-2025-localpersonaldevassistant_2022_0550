@@ -1,15 +1,48 @@
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
+import { createChat, getChats } from "../api/message";
 
 export default function Sidebar({ onSelect, selected, user, onLogout }) {
 
-    const navs = [
-        { title: 'Copilot chat', image: '/logo.png' },
-        { title: 'Pomodoro', image: '/pomodoro.png' },
-        { title: 'Generate quiz', image: '/quiz.png' },
-    ]
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [chats, setChats] = useState([]);
 
-    const chats = [];
+    const getAllUsersChats = async () => {
+        setError('');
+
+        try {
+            const data = await getChats();
+            setChats(data);
+            console.log(data);
+        } catch (error) {
+            console.error(error);
+            setError("Neuspešno uzimanje chatova");
+        }
+    }
+
+    useEffect(() => {
+        if (user) {
+            getAllUsersChats();
+        }
+    }, [user]);
+
+    const handleCreateChat = async () => {
+        setError('');
+        setLoading(true);
+
+        try {
+            const chat = await createChat();
+            console.log(chat);
+            setChats(prevChats => [chat, ...prevChats]);
+        } catch (error) {
+            console.error(err);
+            setError("Neuspešno kreiranje chata");
+        } finally {
+            setLoading(false);
+        }
+
+        // onSelect('Chat');
+    }
 
     return (
         <aside className="flex flex-col text-left w-1/5 h-full font-bold text-white text-2xl bg-neutral-900 border-r">
@@ -46,24 +79,32 @@ export default function Sidebar({ onSelect, selected, user, onLogout }) {
 
             {/* New chat */}
             <div className="flex w-full h-20 p-3">
-                <div onClick={() => onSelect('Chat')} className="w-full h-full flex gap-3 items-center bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
+                <div onClick={!loading ? handleCreateChat : undefined} className={`w-full h-full flex gap-3 items-center bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <img className="w-7" src="./newchat.png" alt="newchat" />
-                    <h2>New chat</h2>
+                    <h2 className="text-xl">{loading ? 'Creating chat...' : 'New chat'}</h2>
                 </div>
             </div>
 
             {/* Chat history */}
-            <div className="flex flex-col pl-3">
-                <div className="flex items-center gap-3 w-full h-15 mb-3">
-                    <img className="w-7" src="./chat-history.png" alt="chat-history" />
-                    <h2>Chat history</h2>
+            {user && (
+                <div className="flex flex-col pl-3 pr-3">
+                    <div className="flex items-center gap-3 w-full h-15">
+                        <img className="w-7" src="./chat-history.png" alt="chat-history" />
+                        <h2>Chat history</h2>
+                    </div>
+                    {chats.length === 0 ? (
+                        <p className="font-normal text-xl opacity-50">Chat history is empty.</p>
+                    ) : (
+                        <div className="w-full flex flex-col gap-2">
+                            {chats.map(chat => (
+                                <div key={chat.id} className="flex items-center justify-baseline w-full bg-zinc-800 text-lg p-3 rounded-xl cursor-pointer hover:bg-zinc-700 duration-200">
+                                    {chat.title}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                {chats.length === 0 ? (
-                    <p className="font-normal text-xl opacity-50">Chat history is empty.</p>
-                ) : (
-                    <div></div>
-                )}
-            </div>
+            )}
         </aside>
     );
 
