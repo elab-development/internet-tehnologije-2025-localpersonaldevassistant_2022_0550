@@ -3,7 +3,7 @@ import AdminUsers from './AdminUsers';
 import AdminConfig from './AdminConfig';
 
 export default function AdminPanel({ onBackToChats }) {
-    const [activeTab, setActiveTab] = useState('stats');
+    const [activeTab, setActiveTab] = useState('users');
 
     const tabs = [
         
@@ -24,7 +24,7 @@ export default function AdminPanel({ onBackToChats }) {
                 {/* Back button */}
                 <button
                     onClick={onBackToChats}
-                    className="flex items-center gap-2 px-4 py-2 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg transition-all duration-200"
+                    className="flex items-center gap-2 px-4 py-2 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg transition-all duration-200 cursor-pointer"
                 >
                     <span>←</span>
                     <span>Back to Chats</span>
@@ -59,7 +59,7 @@ export default function AdminPanel({ onBackToChats }) {
 
             {/* Tab Content */}
             <div className="flex-1 overflow-y-auto p-6">
-                
+                 {ActiveComponent ? <ActiveComponent /> : <div className="text-white">Loading...</div>}
 
             </div>
         </div>
