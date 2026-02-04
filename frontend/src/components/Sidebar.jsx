@@ -120,7 +120,7 @@ export default function Sidebar({
                             className={`w-full flex gap-3 items-center p-3 rounded-lg cursor-pointer duration-200 ${
                                 activeView === 'admin' 
                                     ? 'bg-red-600 hover:bg-red-700' 
-                                    : 'bg-zinc-600 hover:bg-zinc-700 border-2 border-red-600'
+                                    : 'bg-zinc-600 hover:bg-zinc-700'
                             }`}
                         >
                             <img className="w-6" src="./settings.png" alt="admin" />

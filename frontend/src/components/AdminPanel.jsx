@@ -38,7 +38,7 @@ export default function AdminPanel({ onBackToChats }) {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center justify-center gap-2 px-6 py-3 text-lg font-semibold rounded-t-lg transition-all duration-200 ${
+                        className={`flex items-center justify-center gap-2 px-6 py-3 text-lg font-semibold rounded-t-lg transition-all duration-200 cursor-pointer ${
                             activeTab === tab.id
                                 ? 'bg-red-600 text-white'
                                 : 'bg-zinc-700 text-gray-400 hover:bg-zinc-600 hover:text-white'

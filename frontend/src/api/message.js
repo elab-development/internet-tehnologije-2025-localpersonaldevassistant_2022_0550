@@ -45,4 +45,9 @@ export const updateChat = async (chat_id, title) => {
     return response.data;
 }
 
+export const deleteChat = async (chat_id) => {
+    const response = await api.delete(`chat/${chat_id}`);
+    return response.data;
+}
+
 export default api;
