@@ -5,14 +5,14 @@ import Register from './components/RegisterPage';
 import Chat from './components/Chat';
 import { getSavedUser, logout } from './api/auth';
 import { getChats } from './api/message';
-import AdminPanel from './components/AdminPanel'; 
+import AdminPanel from './components/AdminPanel';
 
 export default function App() {
     const [selectedItem, setSelectedItem] = useState('');
     const [user, setUser] = useState(null);
     const [activeChatID, setActiveChatID] = useState(null);
     const [chats, setChats] = useState([]);
-    const [activeView, setActiveView] = useState('chat'); 
+    const [activeView, setActiveView] = useState('chat');
 
     const fetchChats = async () => {
         try {
@@ -45,8 +45,6 @@ export default function App() {
         setSelectedItem('WelcomePage');
     };
 
-
-
     const handleChatUpdated = (updatedChat) => {
         setChats(prevChats =>
             prevChats.map(c => c.id === updatedChat.id ? updatedChat : c)
@@ -54,16 +52,22 @@ export default function App() {
         );
     };
 
+    const handleChatDeleted = (deletedChatId) => {
+        setChats(prevChats => prevChats.filter(chat => chat.id !== deletedChatId));
+        setActiveChatID(null);
+        setSelectedItem('WelcomePage');
+    };
+
     const renderPage = () => {
-       
-    // Ako je admin view aktivan i korisnik je admin
+
+        // Ako je admin view aktivan i korisnik je admin
         if (user && activeView === 'admin' && user.role_id === 'admin') {
             return <AdminPanel onBackToChats={() => setActiveView('chat')} />
         }
-    
+
 
         if (user && activeChatID) {
-            return <Chat chatId={activeChatID} onChatUpdated={handleChatUpdated} />
+            return <Chat chatId={activeChatID} onChatUpdated={handleChatUpdated} onChatDeleted={handleChatDeleted} />
         }
 
         switch (selectedItem) {
@@ -86,8 +90,8 @@ export default function App() {
                 activeChatID={activeChatID}
                 onLogout={handleLogout}
                 onSelect={setSelectedItem}
-                activeView={activeView} 
-                onViewChange={setActiveView} 
+                activeView={activeView}
+                onViewChange={setActiveView}
             />
             <div className='w-4/5 h-full'>
                 {renderPage()}
