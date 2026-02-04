@@ -1,7 +1,17 @@
 import { useState, useEffect } from "react";
 import { createChat, getChats } from "../api/message";
 
-export default function Sidebar({ user, chats, setChats, onChatSelect, activeChatID, onLogout, onSelect }) {
+export default function Sidebar({ 
+    user, 
+    chats, 
+    setChats, 
+    onChatSelect, 
+    activeChatID, 
+    onLogout, 
+    onSelect,
+    onViewChange, 
+    activeView 
+}) {
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -10,12 +20,14 @@ export default function Sidebar({ user, chats, setChats, onChatSelect, activeCha
     const handleCreateChat = async () => {
         setError('');
         setLoading(true);
+        
 
         try {
             const chat = await createChat();
             console.log(chat);
             setChats(prevChats => [chat, ...prevChats]);
             onChatSelect(chat.id);
+            onViewChange('chat');
         } catch (error) {
             console.error(err);
             setError("Neuspešno kreiranje chata");
@@ -64,6 +76,7 @@ export default function Sidebar({ user, chats, setChats, onChatSelect, activeCha
                     <h2 className="text-xl">{loading ? 'Creating chat...' : 'New chat'}</h2>
                 </div>
             </div>
+            
 
             {/* Chat history */}
             {user && (
@@ -80,7 +93,7 @@ export default function Sidebar({ user, chats, setChats, onChatSelect, activeCha
                                 const isActive = chat.id === activeChatID;
 
                                 return (
-                                    <div key={chat.id} onClick={() => onChatSelect(chat.id)}
+                                    <div key={chat.id} onClick={() => {onChatSelect(chat.id); onViewChange('chat')}}
                                         className={`flex items-center justify-baseline w-full text-lg p-3 rounded-xl cursor-pointer ${isActive ? 'bg-zinc-600' : 'bg-zinc-800 hover:bg-zinc-700 duration-200'}`}>
                                         {chat.title.length > 25
                                             ? chat.title.slice(0, 25) + "..."
@@ -91,7 +104,32 @@ export default function Sidebar({ user, chats, setChats, onChatSelect, activeCha
                         </div>
                     )}
                 </div>
+             
+                
             )}
+                        
+            {user && user.role_id === 'admin' && (
+                <>
+                    {/* Divider */}
+                    <div className="w-full h-px bg-zinc-700 mt-auto mb-3 mx-3"></div>
+
+                    {/* Admin Panel Button */}
+                    <div className="flex w-full px-3 pb-3">
+                        <div 
+                            onClick={() => onViewChange('admin')}
+                            className={`w-full flex gap-3 items-center p-3 rounded-lg cursor-pointer duration-200 ${
+                                activeView === 'admin' 
+                                    ? 'bg-red-600 hover:bg-red-700' 
+                                    : 'bg-zinc-600 hover:bg-zinc-700 border-2 border-red-600'
+                            }`}
+                        >
+                            <img className="w-6" src="./settings.png" alt="admin" />
+                            <h2 className="text-xl">Admin Panel</h2>
+                        </div>
+                    </div>
+                </>
+            )}
+           
         </aside>
     );
 
