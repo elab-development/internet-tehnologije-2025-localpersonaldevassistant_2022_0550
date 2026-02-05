@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
+from datetime import datetime
 
 from app.database import get_db
 from app.models.chat import Chat
@@ -40,7 +41,7 @@ def get_all_user_chats(
     chats = (
         db.query(Chat)
         .filter(Chat.user_id == current_user.id)
-        .order_by(Chat.created_at.desc())
+        .order_by(Chat.updated_at.desc())
         .all()
     )
 
@@ -81,6 +82,7 @@ def update_chat_title(
         raise HTTPException(status_code=404, detail="Chat not found")
         
     chat.title = update_data.title
+    chat.updated_at = datetime.now()
     db.commit()
     db.refresh(chat)
     return chat

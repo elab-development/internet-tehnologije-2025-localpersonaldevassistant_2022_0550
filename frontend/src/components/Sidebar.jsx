@@ -22,10 +22,12 @@ export default function Sidebar({
 
         // Logika za guest korisnika
         if (!user) {
+            const now = new Date().toISOString();
             const guestChat = {
                 id: `guest_${Date.now()}`,
                 title: "New chat",
-                created_at: new Date().toISOString()
+                created_at: now,
+                updated_at: now
             };
             setChats(prev => [guestChat, ...prev]);
             onChatSelect(guestChat.id);
@@ -68,11 +70,11 @@ export default function Sidebar({
                             <h3>Guest</h3>
                         </div>
                         <div className="flex justify-between items-center w-full h-1/2">
-                            <div onClick={() => {onChatSelect(null); onSelect('Login')}} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
+                            <div onClick={() => { onChatSelect(null); onSelect('Login') }} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
                                 <img className="w-5" src="./login.png" alt="login" />
                                 <p className="font-medium text-xl">Login</p>
                             </div>
-                            <div onClick={() => {onChatSelect(null); onSelect('Register')}} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
+                            <div onClick={() => { onChatSelect(null); onSelect('Register') }} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
                                 <img className="w-5" src="./signup.png" alt="login" />
                                 <p className="font-medium text-xl">Signup</p>
                             </div>
@@ -130,8 +132,8 @@ export default function Sidebar({
                         <div
                             onClick={() => onViewChange('admin')}
                             className={`w-full flex gap-3 items-center p-3 rounded-lg cursor-pointer duration-200 ${activeView === 'admin'
-                                    ? 'bg-red-600 hover:bg-red-700'
-                                    : 'bg-zinc-600 hover:bg-zinc-700'
+                                ? 'bg-red-600 hover:bg-red-700'
+                                : 'bg-zinc-600 hover:bg-zinc-700'
                                 }`}
                         >
                             <img className="w-6" src="./settings.png" alt="admin" />

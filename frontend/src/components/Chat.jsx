@@ -33,7 +33,7 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
     const handleUpdateTitle = async () => {
 
         if (isGuest) {
-            const updatedChat = { ...chatData, title: newTitle };
+            const updatedChat = { ...chatData, title: newTitle, updated_at: new Date().toISOString() };
             setChatData(updatedChat);
             setIsEditing(false);
             onChatUpdated(updatedChat);
@@ -113,13 +113,15 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
 
                 <div className="w-full h-20 flex items-center justify-center">
                     <div className="w-4/5 h-full flex items-center justify-center gap-5">
-                        <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
-                            <img className="w-7" src="./doc.png" alt="document" />
-                        </div>
+                        {!isGuest &&
+                            <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
+                                <img className="w-7" src="./doc.png" alt="document" />
+                            </div>}
                         <input placeholder="Enter a message..." className="w-4/5 h-15 rounded-2xl bg-zinc-600 pl-3 pr-3 text-white text-lg outline-0" type="text" />
-                        <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
-                            <img className="w-8" src="./mode.png" alt="send" />
-                        </div>
+                        {!isGuest &&
+                            <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
+                                <img className="w-8" src="./mode.png" alt="send" />
+                            </div>}
                         <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
                             <img className="w-6" src="./send.png" alt="send" />
                         </div>

@@ -17,13 +17,17 @@ export default function App() {
     const fetchChats = async () => {
         try {
             const data = await getChats();
-            setChats(data);
+            setChats(sortChats(data));
         } catch (error) { console.error(error); }
     };
 
     useEffect(() => {
         if (user) fetchChats();
     }, [user]);
+
+    const sortChats = (chatList) => {
+        return [...chatList].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    };
 
     // Login handler
     const handleLogin = (userData) => {
@@ -47,10 +51,10 @@ export default function App() {
     };
 
     const handleChatUpdated = (updatedChat) => {
-        setChats(prevChats =>
-            prevChats.map(c => c.id === updatedChat.id ? updatedChat : c)
-
-        );
+        setChats(prevChats => {
+            const newChats = prevChats.map(c => c.id === updatedChat.id ? updatedChat : c);
+            return [...newChats].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        });
     };
 
     const handleChatDeleted = (deletedChatId) => {
