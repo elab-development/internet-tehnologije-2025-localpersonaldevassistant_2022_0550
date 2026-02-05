@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import { createChat, getChats } from "../api/message";
 
-export default function Sidebar({ 
-    user, 
-    chats, 
-    setChats, 
-    onChatSelect, 
-    activeChatID, 
-    onLogout, 
+export default function Sidebar({
+    user,
+    chats,
+    setChats,
+    onChatSelect,
+    activeChatID,
+    onLogout,
     onSelect,
-    onViewChange, 
-    activeView 
+    onViewChange,
+    activeView
 }) {
 
     const [error, setError] = useState('');
@@ -19,9 +19,21 @@ export default function Sidebar({
 
     const handleCreateChat = async () => {
         setError('');
-        setLoading(true);
-        
 
+        // Logika za guest korisnika
+        if (!user) {
+            const guestChat = {
+                id: `guest_${Date.now()}`,
+                title: "New chat",
+                created_at: new Date().toISOString()
+            };
+            setChats(prev => [guestChat, ...prev]);
+            onChatSelect(guestChat.id);
+            onViewChange('chat');
+            return;
+        }
+
+        setLoading(true);
         try {
             const chat = await createChat();
             console.log(chat);
@@ -56,11 +68,11 @@ export default function Sidebar({
                             <h3>Guest</h3>
                         </div>
                         <div className="flex justify-between items-center w-full h-1/2">
-                            <div onClick={() => onSelect('Login')} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
+                            <div onClick={() => {onChatSelect(null); onSelect('Login')}} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
                                 <img className="w-5" src="./login.png" alt="login" />
                                 <p className="font-medium text-xl">Login</p>
                             </div>
-                            <div onClick={() => onSelect('Register')} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
+                            <div onClick={() => {onChatSelect(null); onSelect('Register')}} className="flex items-center justify-center gap-2 bg-zinc-600 p-3 rounded-lg cursor-pointer hover:bg-zinc-700 duration-200">
                                 <img className="w-5" src="./signup.png" alt="login" />
                                 <p className="font-medium text-xl">Signup</p>
                             </div>
@@ -76,10 +88,10 @@ export default function Sidebar({
                     <h2 className="text-xl">{loading ? 'Creating chat...' : 'New chat'}</h2>
                 </div>
             </div>
-            
+
 
             {/* Chat history */}
-            {user && (
+            {(user || chats.length > 0) && (
                 <div className="flex flex-col pl-3 pr-3 overflow-hidden pb-3">
                     <div className="flex items-center gap-3 w-full h-15 mb-1">
                         <img className="w-7" src="./chat-history.png" alt="chat-history" />
@@ -93,7 +105,7 @@ export default function Sidebar({
                                 const isActive = chat.id === activeChatID;
 
                                 return (
-                                    <div key={chat.id} onClick={() => {onChatSelect(chat.id); onViewChange('chat')}}
+                                    <div key={chat.id} onClick={() => { onChatSelect(chat.id); onViewChange('chat') }}
                                         className={`flex items-center justify-baseline w-full text-lg p-3 rounded-xl cursor-pointer ${isActive ? 'bg-zinc-600' : 'bg-zinc-800 hover:bg-zinc-700 duration-200'}`}>
                                         {chat.title.length > 25
                                             ? chat.title.slice(0, 25) + "..."
@@ -104,10 +116,10 @@ export default function Sidebar({
                         </div>
                     )}
                 </div>
-             
-                
+
+
             )}
-                        
+
             {user && user.role_id === 'admin' && (
                 <>
                     {/* Divider */}
@@ -115,13 +127,12 @@ export default function Sidebar({
 
                     {/* Admin Panel Button */}
                     <div className="flex w-full px-3 pb-3">
-                        <div 
+                        <div
                             onClick={() => onViewChange('admin')}
-                            className={`w-full flex gap-3 items-center p-3 rounded-lg cursor-pointer duration-200 ${
-                                activeView === 'admin' 
-                                    ? 'bg-red-600 hover:bg-red-700' 
+                            className={`w-full flex gap-3 items-center p-3 rounded-lg cursor-pointer duration-200 ${activeView === 'admin'
+                                    ? 'bg-red-600 hover:bg-red-700'
                                     : 'bg-zinc-600 hover:bg-zinc-700'
-                            }`}
+                                }`}
                         >
                             <img className="w-6" src="./settings.png" alt="admin" />
                             <h2 className="text-xl">Admin Panel</h2>
@@ -129,7 +140,7 @@ export default function Sidebar({
                     </div>
                 </>
             )}
-           
+
         </aside>
     );
 

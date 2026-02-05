@@ -42,6 +42,7 @@ export default function App() {
         logout();
         setUser(null);
         setActiveChatID(null);
+        setChats([]);
         setSelectedItem('WelcomePage');
     };
 
@@ -66,8 +67,8 @@ export default function App() {
         }
 
 
-        if (user && activeChatID) {
-            return <Chat chatId={activeChatID} onChatUpdated={handleChatUpdated} onChatDeleted={handleChatDeleted} />
+        if (activeChatID) {
+            return <Chat chatId={activeChatID} onChatUpdated={handleChatUpdated} onChatDeleted={handleChatDeleted} isGuest={!user} chats={chats} />
         }
 
         switch (selectedItem) {
