@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { getChat, updateChat, deleteChat } from "../api/message";
 
-export default function Chat({ chatId, onChatUpdated, onChatDeleted }) {
+export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, chats }) {
 
     const [chatData, setChatData] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -10,6 +10,16 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted }) {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const getChatByID = async () => {
+
+        if (isGuest) {
+            const localChat = chats.find(c => c.id === chatId);
+            if (localChat) {
+                setChatData(localChat);
+                setNewTitle(localChat.title);
+            }
+            return;
+        }
+
         try {
             const chat = await getChat(chatId);
             setChatData(chat);
@@ -21,6 +31,15 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted }) {
     }
 
     const handleUpdateTitle = async () => {
+
+        if (isGuest) {
+            const updatedChat = { ...chatData, title: newTitle };
+            setChatData(updatedChat);
+            setIsEditing(false);
+            onChatUpdated(updatedChat);
+            return;
+        }
+
         try {
             const updatedChat = await updateChat(chatId, newTitle);
             setChatData(updatedChat);
@@ -33,6 +52,13 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted }) {
     }
 
     const handleDelete = async () => {
+
+        if (isGuest) {
+            onChatDeleted(chatId);
+            setShowDeleteModal(false);
+            return;
+        }
+
         try {
             await deleteChat(chatId);
             if (onChatDeleted) {
@@ -49,7 +75,7 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted }) {
             getChatByID();
             setIsEditing(false);
         }
-    }, [chatId]);
+    }, [chatId, chats]);
 
     return (
         <>
