@@ -43,7 +43,7 @@ export default function Sidebar({
             onChatSelect(chat.id);
             onViewChange('chat');
         } catch (error) {
-            console.error(err);
+            console.error(error);
             setError("Neuspešno kreiranje chata");
         } finally {
             setLoading(false);

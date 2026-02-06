@@ -21,9 +21,12 @@ def create_chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    now = datetime.now()
     new_chat = Chat(
         user_id=current_user.id,
-        title="New chat"
+        title="New chat",
+        created_at=now,
+        updated_at=now
     )
 
     db.add(new_chat)
