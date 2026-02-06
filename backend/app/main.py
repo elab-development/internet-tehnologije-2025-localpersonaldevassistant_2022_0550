@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import auth
 from app.routers import chat
 from app.routers import admin
+from app.routers import message
 
 
 app = FastAPI(
@@ -40,6 +41,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(admin.router)
+app.include_router(message.router)
 
 
 @app.get("/")

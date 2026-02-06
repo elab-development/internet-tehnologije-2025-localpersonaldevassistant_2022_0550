@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 from pydantic import BaseModel
 from datetime import datetime
@@ -57,8 +57,12 @@ def get_chat_by_id(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
-    chat = db.query(Chat).filter(Chat.id == chat_id, Chat.user_id == current_user.id).first()
+    chat = (
+        db.query(Chat)
+        .options(joinedload(Chat.messages)) 
+        .filter(Chat.id == chat_id, Chat.user_id == current_user.id)
+        .first()
+    )
     
     if not chat:
         raise HTTPException(
@@ -99,8 +103,8 @@ def delete_chat(
     chat = db.query(Chat).filter(Chat.id == chat_id, Chat.user_id == current_user.id).first()
     
     if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
+        raise HTTPException(status_code=404, detail="Chat ne postoji")
         
     db.delete(chat)
     db.commit()
-    return {"message": "Chat successfully deleted"}
+    return {"status": "success", "message": "Chat i sve pripadajuće poruke su obrisani"}
