@@ -50,4 +50,18 @@ export const deleteChat = async (chat_id) => {
     return response.data;
 }
 
+export const getModes = async () => {
+    const response = await api.get('/messages/modes');
+    return response.data;
+}
+
+export const sendMessage = async (chatId, content, modeId) => {
+    const response = await api.post('/messages/send', {
+        chat_id: chatId,
+        content: content,
+        mode_id: modeId
+    });
+    return response.data;
+}
+
 export default api;
