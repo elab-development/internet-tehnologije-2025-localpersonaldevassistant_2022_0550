@@ -9,6 +9,15 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
     const [newTitle, setNewTitle] = useState(chatData?.title);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+    const [mode, setMode] = useState('default');
+    const [showModeMenu, setShowModeMenu] = useState(false);
+    const availableModes = [
+        { id: 1, name: 'default', title: 'Default', icon: './default_mode.png' },
+        { id: 2, name: 'bug_fixer', title: 'Bug fixer', icon: './bug_fixer.png' },
+        { id: 3, name: 'code_reviewer', title: 'Code reviewer', icon: './code_reviewer.png' },
+        { id: 4, name: 'python_tutor', title: 'Python tutor', icon: './python_tutor.png' },
+    ]
+
     const getChatByID = async () => {
 
         if (isGuest) {
@@ -118,10 +127,34 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                                 <img className="w-7" src="./doc.png" alt="document" />
                             </div>}
                         <input placeholder="Enter a message..." className="w-4/5 h-15 rounded-2xl bg-zinc-600 pl-3 pr-3 text-white text-lg outline-0" type="text" />
-                        {!isGuest &&
-                            <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
-                                <img className="w-8" src="./mode.png" alt="send" />
-                            </div>}
+                        {!isGuest && (
+                            <div className="relative">
+                                {showModeMenu && (
+                                    <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-48 bg-zinc-800 border border-zinc-700 rounded-2xl shadow-2xl p-2 flex flex-col gap-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                                        <p className="text-zinc-500 text-xs font-bold px-3 py-1 uppercase">Select Mode</p>
+                                        {availableModes.map((m) => (
+                                            <div
+                                                key={m.id}
+                                                onClick={() => {
+                                                    setMode(m.name);
+                                                    setShowModeMenu(false);
+                                                }}
+                                                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer duration-200 ${mode === m.name ? 'bg-zinc-600 text-white' : 'text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
+                                            >
+                                                <img className="w-5" src={m.icon} alt="" />
+                                                <span className="text-sm font-medium">{m.title}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div
+                                    onClick={() => setShowModeMenu(!showModeMenu)}
+                                    className={`w-15 h-15 rounded-4xl flex justify-center items-center cursor-pointer duration-200 ${showModeMenu ? 'bg-zinc-500 shadow-inner' : 'bg-zinc-600 hover:bg-zinc-700'}`}
+                                >
+                                    <img className="w-8" src="./mode.png" alt="mode" />
+                                </div>
+                            </div>
+                        )}
                         <div className="w-15 h-15 bg-zinc-600 rounded-4xl flex justify-center items-center cursor-pointer hover:bg-zinc-700 duration-200">
                             <img className="w-6" src="./send.png" alt="send" />
                         </div>
