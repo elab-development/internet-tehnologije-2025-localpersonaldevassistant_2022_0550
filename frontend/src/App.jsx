@@ -64,12 +64,11 @@ export default function App() {
     };
 
     // Register handler
-    const handleRegister = (userData) => {
+    const handleRegister = () => {
       setChats(prevChats => prevChats.filter(chat => !String(chat.id).startsWith('guest_')));
         localStorage.removeItem('guest_chats');
         setActiveChatID(null);
-        setUser(userData);
-        setSelectedItem('WelcomePage');
+        setSelectedItem('Login');
     };
 
     // Logout handler
