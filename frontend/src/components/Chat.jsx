@@ -335,7 +335,7 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-zinc-800 rounded-lg p-6 max-w-md w-full mx-4 border border-zinc-700">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                            <div className="w-12 h-12 flex items-center justify-center shrink-0">
                                 <img 
                                     src="./crisis.png" 
                                     alt="Warning" 
@@ -348,8 +348,8 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                         </div>
                         
                         <p className="text-zinc-400 mb-6">
-                            Guest users are limited to <span className="text-yellow-400 font-bold">1 chat</span>. 
-                            Please login or register to create more chats!
+                            Guest users are limited to <span className="text-yellow-400 font-bold">10 messages</span>. 
+                            Please login or register to ask more questions!
                         </p>
                         
                         <div className="flex gap-3">
