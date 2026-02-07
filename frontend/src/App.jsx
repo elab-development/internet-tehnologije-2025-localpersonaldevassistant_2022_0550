@@ -21,6 +21,7 @@ export default function App() {
         } catch (error) { console.error(error); }
     };
 
+
     useEffect(() => {
         if (user) fetchChats();
     }, [user]);
@@ -29,14 +30,44 @@ export default function App() {
         return [...chatList].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
     };
 
+    useEffect(() => {
+        const savedGuestChats = localStorage.getItem('guest_chats');
+        if (savedGuestChats && !user) {
+            try {
+                const parsedChats = JSON.parse(savedGuestChats);
+                setChats(parsedChats);
+            } catch (error) {
+                console.error('Error loading guest chats:', error);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!user && chats.length > 0) {
+            
+            const guestChats = chats.filter(chat => String(chat.id).startsWith('guest_'));
+            if (guestChats.length > 0) {
+                localStorage.setItem('guest_chats', JSON.stringify(guestChats));
+            }
+        }
+    }, [chats, user]);
+
+
+
     // Login handler
     const handleLogin = (userData) => {
+          setChats(prevChats => prevChats.filter(chat => !String(chat.id).startsWith('guest_')));
+        localStorage.removeItem('guest_chats');
+        setActiveChatID(null);
         setUser(userData);
         setSelectedItem('WelcomePage');
     };
 
     // Register handler
     const handleRegister = (userData) => {
+      setChats(prevChats => prevChats.filter(chat => !String(chat.id).startsWith('guest_')));
+        localStorage.removeItem('guest_chats');
+        setActiveChatID(null);
         setUser(userData);
         setSelectedItem('WelcomePage');
     };
@@ -44,6 +75,9 @@ export default function App() {
     // Logout handler
     const handleLogout = () => {
         logout();
+         setChats(prevChats => prevChats.filter(chat => !String(chat.id).startsWith('guest_')));
+        localStorage.removeItem('guest_chats');
+        setActiveChatID(null);
         setUser(null);
         setActiveChatID(null);
         setChats([]);
@@ -72,7 +106,8 @@ export default function App() {
 
 
         if (activeChatID) {
-            return <Chat chatId={activeChatID} onChatUpdated={handleChatUpdated} onChatDeleted={handleChatDeleted} isGuest={!user} chats={chats} />
+            return <Chat chatId={activeChatID} onChatUpdated={handleChatUpdated} onChatDeleted={handleChatDeleted} isGuest={!user} chats={chats}
+             onSelect={setSelectedItem} onChatSelect={setActiveChatID}  />
         }
 
         switch (selectedItem) {

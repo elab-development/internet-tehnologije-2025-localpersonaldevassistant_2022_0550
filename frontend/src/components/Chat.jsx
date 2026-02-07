@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { getChat, updateChat, deleteChat, getModes, sendMessage } from "../api/message";
+import { getChat, updateChat, deleteChat, getModes, sendMessage,sendAnonymousMessage } from "../api/message";
 
-export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, chats }) {
+
+export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, chats,onSelect,onChatSelect }) {
     const [chatData, setChatData] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
     const [newTitle, setNewTitle] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [guestMessageCount, setGuestMessageCount] = useState(0);
 
     const [modes, setModes] = useState([]);
     const [selectedMode, setSelectedMode] = useState(null);
@@ -15,6 +17,7 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
     const [inputValue, setInputValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
+    const [showMessageLimitModal, setShowMessageLimitModal] = useState(false);
 
     const modeConfig = {
         'default': { title: 'Default', icon: './default_mode.png' },
@@ -27,33 +30,83 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+
+    useEffect(() => {
+        if (isGuest && chatId) {
+            const savedMessages = localStorage.getItem(`guest_messages_${chatId}`);
+            if (savedMessages) {
+                try {
+                    setMessages(JSON.parse(savedMessages));
+                } catch (error) {
+                    console.error('Error loading guest messages:', error);
+                }
+            }
+    }
+    }, [chatId, isGuest]);
+
+    useEffect(() => {
+    if (isGuest && chatId) {
+        const savedCount = localStorage.getItem(`guest_message_count_${chatId}`);
+        if (savedCount) {
+            setGuestMessageCount(parseInt(savedCount, 10));
+        } else {
+            setGuestMessageCount(0);
+        }
+    }
+}, [chatId, isGuest]);
+
+
+    useEffect(() => {
+        if (isGuest && chatId && messages.length > 0) {
+            localStorage.setItem(`guest_messages_${chatId}`, JSON.stringify(messages));
+        }
+    }, [messages, chatId, isGuest]);
+
+
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
     const loadInitialData = async () => {
-        try {
+    try {
+        if (isGuest) {
+            const defaultMode = { id: 1, name: 'default', description: 'You are a helpful AI assistant.' };
+            setModes([defaultMode]);
+            setSelectedMode(defaultMode);
+            
+            const localChat = chats.find(c => c.id === chatId);
+            if (localChat) {
+                setChatData(localChat);
+                setNewTitle(localChat.title);
+                
+                
+                const savedMessages = localStorage.getItem(`guest_messages_${chatId}`);
+                if (savedMessages) {
+                    try {
+                        setMessages(JSON.parse(savedMessages));
+                    } catch (error) {
+                        console.error('Error loading messages:', error);
+                        setMessages([]);
+                    }
+                } else {
+                    setMessages([]);
+                }
+            }
+        } else {
             const dbModes = await getModes();
             setModes(dbModes);
             if (dbModes.length > 0) setSelectedMode(dbModes[0]);
 
-            if (isGuest) {
-                const localChat = chats.find(c => c.id === chatId);
-                if (localChat) {
-                    setChatData(localChat);
-                    setNewTitle(localChat.title);
-                    setMessages([]);
-                }
-            } else {
-                const chat = await getChat(chatId);
-                setChatData(chat);
-                setNewTitle(chat.title);
-                setMessages(chat.messages || []);
-            }
-        } catch (error) {
-            console.error("Greška pri učitavanju:", error);
+            const chat = await getChat(chatId);
+            setChatData(chat);
+            setNewTitle(chat.title);
+            setMessages(chat.messages || []);
         }
-    };
+    } catch (error) {
+        console.error("Greška pri učitavanju:", error);
+    }
+};
+
 
     useEffect(() => {
         if (chatId) {
@@ -79,30 +132,80 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
     };
 
     const handleSend = async () => {
-        if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading) return;
 
-        const currentInput = inputValue;
-        setInputValue("");
-
-        const userMsg = { role: "user", content: currentInput };
-        setMessages(prev => [...prev, userMsg]);
-
-        setIsLoading(true);
-
-        try {
-            const aiMsg = await sendMessage(chatId, currentInput, selectedMode.id);
-            setMessages(prev => [...prev, aiMsg]);
-        } catch (error) {
-            console.error("Slanje poruke neuspešno:", error);
-        } finally {
-            setIsLoading(false);
+    if (isGuest) {
+        if (guestMessageCount >= 10) {
+            setShowMessageLimitModal(true);
+            return;
         }
-    };
+    }
+
+    const currentInput = inputValue;
+    setInputValue("");
+
+    const userMsg = { role: "user", content: currentInput };
+    setMessages(prev => [...prev, userMsg]);
+
+    setIsLoading(true);
+
+    try {
+        let aiMsg;
+        
+        if (isGuest) {
+            const response = await sendAnonymousMessage(currentInput, 1);
+            aiMsg = {
+                role: "assistant",
+                content: response.content
+            };
+            
+            const newCount = guestMessageCount + 1;
+            setGuestMessageCount(newCount);
+            localStorage.setItem(`guest_message_count_${chatId}`, newCount.toString());
+            
+            const updatedChat = {
+                ...chatData,
+                updated_at: new Date().toISOString()
+            };
+            setChatData(updatedChat);
+            
+            if (onChatUpdated) {
+                onChatUpdated(updatedChat);
+            }
+
+            
+        } else {
+           
+            aiMsg = await sendMessage(chatId, currentInput, selectedMode?.id || 1);
+            
+           
+            const updatedChat = {
+                ...chatData,
+                updated_at: new Date().toISOString()
+            };
+            setChatData(updatedChat);
+            
+            if (onChatUpdated) {
+                onChatUpdated(updatedChat);
+            }
+        }
+        
+        setMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+        console.error("Slanje poruke neuspešno:", error);
+       
+    } finally {
+        setIsLoading(false);
+    }
+};
+
 
     const handleDelete = async () => {
         if (isGuest) {
             onChatDeleted(chatId);
             setShowDeleteModal(false);
+            localStorage.removeItem(`guest_messages_${chatId}`);
+            localStorage.removeItem(`guest_message_count_${chatId}`);
             return;
         }
         try {
@@ -227,6 +330,62 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                     </div>
                 </div>
             )}
+            {/* MESSAGE LIMIT MODAL */}
+            {showMessageLimitModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-zinc-800 rounded-lg p-6 max-w-md w-full mx-4 border border-zinc-700">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                                <img 
+                                    src="./crisis.png" 
+                                    alt="Warning" 
+                                    className="w-7 h-7"
+                                />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">
+                                Message Limit Reached
+                            </h3>
+                        </div>
+                        
+                        <p className="text-zinc-400 mb-6">
+                            Guest users are limited to <span className="text-yellow-400 font-bold">1 chat</span>. 
+                            Please login or register to create more chats!
+                        </p>
+                        
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => {
+                                    setShowMessageLimitModal(false);
+                                    onSelect('Login');
+                                    onChatSelect(null);
+                                }} 
+                                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer font-bold"
+                            >
+                                Login
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setShowMessageLimitModal(false);
+                                    onSelect('Register');
+                                    onChatSelect(null);
+                                }} 
+                                className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 cursor-pointer font-bold"
+                            >
+                                Register
+                            </button>
+                            <button 
+                                onClick={() => setShowMessageLimitModal(false)} 
+                                className="px-4 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+                
+            }
         </>
+
     );
 }

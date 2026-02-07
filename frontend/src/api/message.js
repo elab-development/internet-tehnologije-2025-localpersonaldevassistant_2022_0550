@@ -12,6 +12,8 @@ const api = axios.create({
 });
 
 
+
+
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
@@ -24,6 +26,28 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
+
+/* Za Guest-a */
+export const sendAnonymousMessage = async (content, modeId = 4) => {
+  const response = await fetch('http://localhost:8000/messages/send-anonymous', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      content: content,
+      mode_id: modeId
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to send message');
+  }
+
+  return response.json();
+};
+
 
 export const createChat = async () => {
     const response = await api.post('/chat/create');

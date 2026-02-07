@@ -119,47 +119,4 @@ def get_me(
 
 
 
-@router.post("/guest", response_model=GuestCreateResponse, status_code=status.HTTP_201_CREATED)
-def create_guest(
-    db: Session = Depends(get_db)
-):
-    
-    
-   
-    import uuid
-    guest_email = f"guest_{uuid.uuid4().hex[:8]}@guest.local"
-    
-    
-    guest_password = hash_password(uuid.uuid4().hex)
-    
-    # Kreiraj guest korisnika
-    guest_user = User(
-        email=guest_email,
-        full_name="Guest User",
-        password=guest_password,
-        role_id="guest"
-    )
-    
-    db.add(guest_user)
-    db.commit()
-    db.refresh(guest_user)
-    
-    # Generiši token
-    access_token = create_user_token(
-        user_id=guest_user.id,
-        email=guest_user.email,
-        role_id=guest_user.role_id
-    )
-    
-    # Vrati token i info
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": guest_user.id,
-            "email": guest_user.email,
-            "full_name": guest_user.full_name,
-            "role_id": guest_user.role_id
-        },
-        "message": "Guest account created. Limited to 1 chat and 10 messages."
-    }
+

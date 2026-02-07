@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
+from datetime import datetime
 from app.database import get_db
 from app.models.message import Message
 from app.models.mode import Mode
@@ -38,6 +39,13 @@ async def send_message(data: MessageCreate, db: Session = Depends(get_db)):
             mode_id=data.mode_id
         )
         db.add(ai_msg)
+
+        from app.models.chat import Chat
+        chat = db.query(Chat).filter(Chat.id == data.chat_id).first()
+        if chat:
+            chat.updated_at = datetime.now()
+
+
         db.commit()
         db.refresh(ai_msg)
 
@@ -50,3 +58,36 @@ async def send_message(data: MessageCreate, db: Session = Depends(get_db)):
 @router.get("/modes")
 def fetch_modes(db: Session = Depends(get_db)):
     return db.query(Mode).all()
+
+
+# Za guest-a
+@router.post("/send-anonymous")
+async def send_message_anonymous(
+    content: str = Body(...),
+    mode_id: int = Body(default=4),
+    db: Session = Depends(get_db)
+):
+    
+    
+    
+    db_mode = db.query(Mode).filter(Mode.id == 4).first()
+    system_instructions = db_mode.description if db_mode and db_mode.description else "You are a helpful AI assistant."
+    
+    try:
+        
+        response = ollama.chat(model='llama3.2:1b', messages=[
+            {'role': 'system', 'content': system_instructions},
+            {'role': 'user', 'content': content},
+        ])
+        
+        ai_content = response['message']['content']
+        
+       
+        return {
+            "content": ai_content,
+            "role": "assistant"
+        }
+    
+    except Exception as e:
+        print(f"Ollama error: {e}")
+        raise HTTPException(status_code=500, detail="Ollama is not responding. Is the app running?")

@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 
 
 
-# Secret key za JWT (u production-u staviti u .env fajl!)
+# Secret key za JWT 
 SECRET_KEY = "your-secret-key-change-this-in-production"  
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  
