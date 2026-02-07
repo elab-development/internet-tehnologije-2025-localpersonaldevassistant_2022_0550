@@ -10,47 +10,59 @@ export default function Sidebar({
     onLogout,
     onSelect,
     onViewChange,
-    activeView
+    activeView,
+    
 }) {
 
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showChatLimitModal, setShowChatLimitModal] = useState(false);
 
 
-    const handleCreateChat = async () => {
-        setError('');
+   const handleCreateChat = async () => {
+    setError('');
 
-        // Logika za guest korisnika
-        if (!user) {
-            const now = new Date().toISOString();
-            const guestChat = {
-                id: `guest_${Date.now()}`,
-                title: "New chat",
-                created_at: now,
-                updated_at: now
-            };
-            setChats(prev => [guestChat, ...prev]);
-            onChatSelect(guestChat.id);
-            onViewChange('chat');
+    if (!user) {
+        const guestChats = chats.filter(chat => String(chat.id).startsWith('guest_'));
+        
+        
+        if (guestChats.length >= 1) {
+            setShowChatLimitModal(true);
             return;
         }
-
-        setLoading(true);
-        try {
-            const chat = await createChat();
-            console.log(chat);
-            setChats(prevChats => [chat, ...prevChats]);
-            onChatSelect(chat.id);
-            onViewChange('chat');
-        } catch (error) {
-            console.error(error);
-            setError("Neuspešno kreiranje chata");
-        } finally {
-            setLoading(false);
-        }
+        
+        const now = new Date().toISOString();
+        const guestChat = {
+            id: `guest_${Date.now()}`,
+            title: "New chat",
+            created_at: now,
+            updated_at: now
+        };
+        setChats(prev => [guestChat, ...prev]);
+        onChatSelect(guestChat.id);
+        onViewChange('chat');
+        return;
     }
 
+    setLoading(true);
+    try {
+        const chat = await createChat();
+        console.log(chat);
+        setChats(prevChats => [chat, ...prevChats]);
+        onChatSelect(chat.id);
+        onViewChange('chat');
+    } catch (error) {
+        console.error(error);
+        setError("Neuspešno kreiranje chata");
+    } finally {
+        setLoading(false);
+    }
+    }
+
+
+
     return (
+        <>
         <aside className="flex flex-col text-left w-1/5 h-full font-bold text-white text-2xl bg-neutral-900 border-r">
             {/* Profile */}
             <div className="w-full h-35 p-3 border-b">
@@ -82,6 +94,10 @@ export default function Sidebar({
                     </div>
                 )}
             </div>
+            
+            
+            
+
 
             {/* New chat */}
             <div className="flex w-full h-20 p-3">
@@ -144,6 +160,59 @@ export default function Sidebar({
             )}
 
         </aside>
+        {showChatLimitModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-zinc-800 rounded-lg p-6 max-w-md w-full mx-4 border border-zinc-700">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+                                <img 
+                                    src="./crisis.png" 
+                                    alt="Warning" 
+                                    className="w-7 h-7"
+                                />
+                            </div>
+                            <h3 className="text-xl font-bold text-white">
+                                Chat Limit Reached
+                            </h3>
+                        </div>
+                        
+                        <p className="text-zinc-400 mb-6">
+                            Guest users are limited to <span className="text-yellow-400 font-bold">1 chat</span>. 
+                            Please login or register to create more chats!
+                        </p>
+                        
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => {
+                                    setShowChatLimitModal(false);
+                                    onSelect('Login');
+                                    onChatSelect(null);
+                                }} 
+                                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer font-bold"
+                            >
+                                Login
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setShowChatLimitModal(false);
+                                    onSelect('Register');
+                                    onChatSelect(null);
+                                }} 
+                                className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 cursor-pointer font-bold"
+                            >
+                                Register
+                            </button>
+                            <button 
+                                onClick={() => setShowChatLimitModal(false)} 
+                                className="px-4 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+      </>  
     );
 
 }
