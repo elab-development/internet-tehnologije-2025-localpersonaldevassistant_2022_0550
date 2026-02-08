@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.sql import func
+from datetime import datetime
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -10,6 +12,7 @@ class User(Base):
     full_name = Column(String, nullable=False)
     password = Column(String, nullable=False)  # Hashovan password (bcrypt)
     role_id = Column(String, ForeignKey("user_roles.id"), default="standard_user", nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     
     #relacija sa UserRole tabelom
     role = relationship("UserRole", back_populates="users")

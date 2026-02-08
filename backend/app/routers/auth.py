@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime,timezone
 
 from app.database import get_db
 from app.models.user import User
@@ -48,7 +49,8 @@ def register(
         email=request.email,
         full_name=request.full_name,
         password=hashed_password,
-        role_id="standard_user"  
+        role_id="standard_user",
+        created_at=datetime.now(timezone.utc)
     )
     
     # Dpdavanje u bazu
