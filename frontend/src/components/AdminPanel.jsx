@@ -58,7 +58,7 @@ export default function AdminPanel({ onBackToChats }) {
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
                  {ActiveComponent ? <ActiveComponent /> : <div className="text-white">Loading...</div>}
 
             </div>
