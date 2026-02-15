@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+from app.schemas.document import DocumentResponse
 
 class MessageCreate(BaseModel):
     chat_id: int
@@ -14,6 +15,7 @@ class MessageResponse(BaseModel):
     role: str
     timestamp: datetime
     mode_id: Optional[int]
+    documents: List[DocumentResponse] = []
 
     class Config:
         from_attributes = True

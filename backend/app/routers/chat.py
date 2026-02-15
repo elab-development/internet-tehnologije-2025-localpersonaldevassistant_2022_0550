@@ -7,6 +7,8 @@ from datetime import datetime
 from app.database import get_db
 from app.models.chat import Chat
 from app.models.user import User
+from app.models.message import Message
+from app.models.document import Document
 from app.schemas.chat import ChatResponse
 from app.utils.deps import get_current_user
 
@@ -15,6 +17,8 @@ router = APIRouter(
     tags=["Chat"]
 )
 
+class ChatUpdate(BaseModel):
+    title: str
 
 @router.post("/create", response_model=ChatResponse)
 def create_chat(
@@ -35,7 +39,6 @@ def create_chat(
 
     return new_chat
 
-
 @router.get("/get-all", response_model=List[ChatResponse])
 def get_all_user_chats(
     db: Session = Depends(get_db),
@@ -50,7 +53,6 @@ def get_all_user_chats(
 
     return chats
 
-
 @router.get("/{chat_id}", response_model=ChatResponse)
 def get_chat_by_id(
     chat_id: int, 
@@ -59,7 +61,9 @@ def get_chat_by_id(
 ):
     chat = (
         db.query(Chat)
-        .options(joinedload(Chat.messages)) 
+        .options(
+            joinedload(Chat.messages).joinedload(Message.documents)
+        ) 
         .filter(Chat.id == chat_id, Chat.user_id == current_user.id)
         .first()
     )
@@ -72,10 +76,6 @@ def get_chat_by_id(
         
     return chat
 
-class ChatUpdate(BaseModel):
-    title: str
-    
-    
 @router.patch("/{chat_id}", response_model=ChatResponse)
 def update_chat_title(
     chat_id: int,
@@ -104,7 +104,19 @@ def delete_chat(
     
     if not chat:
         raise HTTPException(status_code=404, detail="Chat ne postoji")
-        
+
+    messages = db.query(Message).filter(Message.chat_id == chat_id).all()
+    
+    document_ids = []
+    for msg in messages:
+        for doc in msg.documents:
+            document_ids.append(doc.id)
+
     db.delete(chat)
+
+    if document_ids:
+        db.query(Document).filter(Document.id.in_(document_ids)).delete(synchronize_session=False)
+        
     db.commit()
-    return {"status": "success", "message": "Chat i sve pripadajuće poruke su obrisani"}
+    
+    return {"status": "success", "message": "Chat, poruke i svi pripadajući fajlovi su obrisani iz baze."}

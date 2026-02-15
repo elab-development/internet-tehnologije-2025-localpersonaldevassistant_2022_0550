@@ -79,11 +79,19 @@ export const getModes = async () => {
     return response.data;
 }
 
-export const sendMessage = async (chatId, content, modeId) => {
-    const response = await api.post('/messages/send', {
-        chat_id: chatId,
-        content: content,
-        mode_id: modeId
+export const sendMessage = async (chatId, content, modeId, file = null) => {
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('content', content);
+    formData.append('mode_id', modeId);
+    if (file) {
+        formData.append('file', file);
+    }
+
+    const response = await api.post('/messages/send', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
     });
     return response.data;
 }
