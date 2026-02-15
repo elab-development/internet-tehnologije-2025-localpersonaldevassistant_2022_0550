@@ -7,8 +7,8 @@ from app.database import Base
 message_documents = Table(
     'message_documents',
     Base.metadata,
-    Column('message_id', Integer, ForeignKey('messages.id'), primary_key=True),
-    Column('document_id', Integer, ForeignKey('documents.id'), primary_key=True)
+    Column('message_id', Integer, ForeignKey('messages.id', ondelete="CASCADE"), primary_key=True),
+    Column('document_id', Integer, ForeignKey('documents.id', ondelete="CASCADE"), primary_key=True)
 )
 
 class Document(Base):

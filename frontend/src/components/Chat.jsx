@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { getChat, updateChat, deleteChat, getModes, sendMessage,sendAnonymousMessage } from "../api/message";
+import { getChat, updateChat, deleteChat, getModes, sendMessage, sendAnonymousMessage } from "../api/message";
 
 
-export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, chats,onSelect,onChatSelect }) {
+export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, chats, onSelect, onChatSelect }) {
     const [chatData, setChatData] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
@@ -18,6 +18,32 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
     const [showMessageLimitModal, setShowMessageLimitModal] = useState(false);
+
+    const [selectedFile, setSelectedFile] = useState(null);
+    const fileInputRef = useRef(null);
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "0px";
+            const scrollHeight = textareaRef.current.scrollHeight;
+            textareaRef.current.style.height = scrollHeight + "px";
+        }
+    }, [inputValue]);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === "application/pdf") {
+            setSelectedFile(file);
+        } else {
+            alert("Please select a PDF file.");
+        }
+        e.target.value = null;
+    };
+
+    const removeFile = () => {
+        setSelectedFile(null);
+    };
 
     const modeConfig = {
         'default': { title: 'Default', icon: './default_mode.png' },
@@ -41,19 +67,19 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                     console.error('Error loading guest messages:', error);
                 }
             }
-    }
+        }
     }, [chatId, isGuest]);
 
     useEffect(() => {
-    if (isGuest && chatId) {
-        const savedCount = localStorage.getItem(`guest_message_count_${chatId}`);
-        if (savedCount) {
-            setGuestMessageCount(parseInt(savedCount, 10));
-        } else {
-            setGuestMessageCount(0);
+        if (isGuest && chatId) {
+            const savedCount = localStorage.getItem(`guest_message_count_${chatId}`);
+            if (savedCount) {
+                setGuestMessageCount(parseInt(savedCount, 10));
+            } else {
+                setGuestMessageCount(0);
+            }
         }
-    }
-}, [chatId, isGuest]);
+    }, [chatId, isGuest]);
 
 
     useEffect(() => {
@@ -68,44 +94,44 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
     }, [messages]);
 
     const loadInitialData = async () => {
-    try {
-        if (isGuest) {
-            const defaultMode = { id: 1, name: 'default', description: 'You are a helpful AI assistant.' };
-            setModes([defaultMode]);
-            setSelectedMode(defaultMode);
-            
-            const localChat = chats.find(c => c.id === chatId);
-            if (localChat) {
-                setChatData(localChat);
-                setNewTitle(localChat.title);
-                
-                
-                const savedMessages = localStorage.getItem(`guest_messages_${chatId}`);
-                if (savedMessages) {
-                    try {
-                        setMessages(JSON.parse(savedMessages));
-                    } catch (error) {
-                        console.error('Error loading messages:', error);
+        try {
+            if (isGuest) {
+                const defaultMode = { id: 1, name: 'default', description: 'You are a helpful AI assistant.' };
+                setModes([defaultMode]);
+                setSelectedMode(defaultMode);
+
+                const localChat = chats.find(c => c.id === chatId);
+                if (localChat) {
+                    setChatData(localChat);
+                    setNewTitle(localChat.title);
+
+
+                    const savedMessages = localStorage.getItem(`guest_messages_${chatId}`);
+                    if (savedMessages) {
+                        try {
+                            setMessages(JSON.parse(savedMessages));
+                        } catch (error) {
+                            console.error('Error loading messages:', error);
+                            setMessages([]);
+                        }
+                    } else {
                         setMessages([]);
                     }
-                } else {
-                    setMessages([]);
                 }
-            }
-        } else {
-            const dbModes = await getModes();
-            setModes(dbModes);
-            if (dbModes.length > 0) setSelectedMode(dbModes[0]);
+            } else {
+                const dbModes = await getModes();
+                setModes(dbModes);
+                if (dbModes.length > 0) setSelectedMode(dbModes[0]);
 
-            const chat = await getChat(chatId);
-            setChatData(chat);
-            setNewTitle(chat.title);
-            setMessages(chat.messages || []);
+                const chat = await getChat(chatId);
+                setChatData(chat);
+                setNewTitle(chat.title);
+                setMessages(chat.messages || []);
+            }
+        } catch (error) {
+            console.error("Greška pri učitavanju:", error);
         }
-    } catch (error) {
-        console.error("Greška pri učitavanju:", error);
-    }
-};
+    };
 
 
     useEffect(() => {
@@ -132,72 +158,69 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
     };
 
     const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
+        if (!inputValue.trim() || isLoading) return;
 
-    if (isGuest) {
-        if (guestMessageCount >= 10) {
+        if (isGuest && guestMessageCount >= 10) {
             setShowMessageLimitModal(true);
             return;
         }
-    }
 
-    const currentInput = inputValue;
-    setInputValue("");
+        const currentInput = inputValue;
+        const currentFile = selectedFile;
 
-    const userMsg = { role: "user", content: currentInput };
-    setMessages(prev => [...prev, userMsg]);
+        setInputValue("");
+        setSelectedFile(null);
 
-    setIsLoading(true);
+        const tempUserMsg = {
+            role: "user",
+            content: currentInput,
+            documents: currentFile ? [{ title: currentFile.name }] : []
+        };
 
-    try {
-        let aiMsg;
-        
-        if (isGuest) {
-            const response = await sendAnonymousMessage(currentInput, 1);
-            aiMsg = {
-                role: "assistant",
-                content: response.content
-            };
-            
-            const newCount = guestMessageCount + 1;
-            setGuestMessageCount(newCount);
-            localStorage.setItem(`guest_message_count_${chatId}`, newCount.toString());
-            
+        setMessages(prev => [...prev, tempUserMsg]);
+        setIsLoading(true);
+
+        try {
+            let aiMsg;
+
+            if (isGuest) {
+                const response = await sendAnonymousMessage(currentInput, 1);
+                aiMsg = {
+                    role: "assistant",
+                    content: response.content,
+                    documents: []
+                };
+
+                const newCount = guestMessageCount + 1;
+                setGuestMessageCount(newCount);
+                localStorage.setItem(`guest_message_count_${chatId}`, newCount.toString());
+            } else {
+                aiMsg = await sendMessage(
+                    chatId,
+                    currentInput,
+                    selectedMode?.id || 1,
+                    currentFile
+                );
+            }
+
+            setMessages(prev => [...prev, aiMsg]);
+
             const updatedChat = {
                 ...chatData,
                 updated_at: new Date().toISOString()
             };
             setChatData(updatedChat);
-            
+
             if (onChatUpdated) {
                 onChatUpdated(updatedChat);
             }
 
-            
-        } else {
-           
-            aiMsg = await sendMessage(chatId, currentInput, selectedMode?.id || 1);
-            
-           
-            const updatedChat = {
-                ...chatData,
-                updated_at: new Date().toISOString()
-            };
-            setChatData(updatedChat);
-            
-            if (onChatUpdated) {
-                onChatUpdated(updatedChat);
-            }
+        } catch (error) {
+            console.error("Slanje poruke neuspešno:", error);
+        } finally {
+            setIsLoading(false);
         }
-        
-        setMessages(prev => [...prev, aiMsg]);
-    } catch (error) {
-        console.error("Slanje poruke neuspešno:", error);
-       
-    } finally {
-        setIsLoading(false);
-    }
-};
+    };
 
 
     const handleDelete = async () => {
@@ -250,7 +273,13 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                         </div>
                     )}
                     {messages.map((msg, index) => (
-                        <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div key={index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                            {msg.role === 'user' && msg.documents && msg.documents.length > 0 && (
+                                <div className="flex items-center gap-2 mb-1 bg-blue-700/40 p-2 px-3 rounded-lg border border-blue-400/30 text-xs text-blue-100">
+                                    <img className="w-3" src="./pdf.png" alt="pdf" />
+                                    <span>{msg.documents[0].title}</span>
+                                </div>
+                            )}
                             <div className={`max-w-[75%] p-4 rounded-2xl text-white shadow-sm ${msg.role === 'user' ? 'bg-blue-600 rounded-tr-none' : 'bg-zinc-800 rounded-tl-none border border-zinc-700'
                                 }`}>
                                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -269,47 +298,92 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
 
                 {/* INPUT AREA */}
                 <div className="w-full p-5 bg-zinc-900 border-t border-zinc-800">
-                    <div className="max-w-4xl mx-auto flex items-center gap-4">
-                        {!isGuest && (
-                            <div className="w-12 h-12 bg-zinc-800 rounded-full flex justify-center items-center cursor-pointer hover:bg-zinc-700 shrink-0">
-                                <img className="w-6" src="./doc.png" alt="doc" />
+                    <div className="max-w-4xl mx-auto">
+
+                        {selectedFile && (
+                            <div className="flex items-center gap-2 mb-3 bg-zinc-800 w-fit p-2 px-4 rounded-xl border border-blue-500/30">
+                                <img className="w-4" src="./pdf.png" alt="pdf" />
+                                <span className="text-zinc-300 text-sm truncate max-w-\[200px\]">{selectedFile.name}</span>
+                                <button
+                                    onClick={removeFile}
+                                    className="ml-2 text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+                                >
+                                    ✕
+                                </button>
                             </div>
                         )}
 
-                        <div className="relative flex-1 flex items-center gap-2">
-                            <input
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder="Ask something..."
-                                className="w-full h-14 rounded-2xl bg-zinc-800 pl-5 pr-5 text-white text-lg outline-none focus:ring-2 focus:ring-blue-500/50"
-                            />
-
-                            {/* MODE SELECTOR */}
+                        <div className="flex items-end gap-4">
                             {!isGuest && (
-                                <div className="relative shrink-0">
-                                    {showModeMenu && (
-                                        <div className="absolute bottom-full mb-4 right-0 w-56 bg-zinc-800 border border-zinc-700 rounded-2xl shadow-2xl p-2 z-50">
-                                            <p className="text-zinc-500 text-[10px] font-bold px-3 py-2 uppercase tracking-wider">Active modes</p>
-                                            {modes.map((m) => (
-                                                <div key={m.id} onClick={() => { setSelectedMode(m); setShowModeMenu(false); }}
-                                                    className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer duration-200 ${selectedMode?.id === m.id ? 'bg-blue-600/20 text-blue-400' : 'text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}>
-                                                    <img className="w-5 h-5" src={modeConfig[m.name]?.icon || './default_mode.png'} alt="" />
-                                                    <div className="flex flex-col text-left">
-                                                        <span className="text-sm font-bold">{modeConfig[m.name]?.title || m.name}</span>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div onClick={() => setShowModeMenu(!showModeMenu)}
-                                        className={`w-12 h-12 rounded-full flex justify-center items-center cursor-pointer duration-200 ${showModeMenu ? 'bg-blue-600' : 'bg-zinc-800 hover:bg-zinc-700'}`}>
-                                        <img className="w-7" src={modeConfig[selectedMode?.name]?.icon || './mode.png'} alt="mode" />
+                                <>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        accept=".pdf"
+                                        className="hidden"
+                                    />
+
+                                    <div
+                                        onClick={() => !selectedFile && fileInputRef.current.click()}
+                                        className={`w-12 h-12 rounded-full flex justify-center items-center shrink-0 duration-200 ${selectedFile
+                                            ? 'bg-zinc-800 opacity-50 cursor-not-allowed'
+                                            : 'bg-zinc-800 cursor-pointer hover:bg-zinc-700'
+                                            }`}
+                                    >
+                                        <img className="w-6" src="./doc.png" alt="doc" />
                                     </div>
-                                </div>
+                                </>
                             )}
 
-                            <div onClick={handleSend} className={`w-12 h-12 rounded-full flex justify-center items-center cursor-pointer duration-200 shrink-0 ${isLoading ? 'bg-zinc-700' : 'bg-blue-600 hover:bg-blue-500'}`}>
+                            <div className="relative flex-1 flex items-end gap-2 bg-zinc-800 rounded-2xl border border-transparent focus-within:ring-2 focus-within:ring-blue-500/50">
+                                <textarea
+                                    ref={textareaRef}
+                                    rows="1"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSend();
+                                        }
+                                    }}
+                                    placeholder="Ask something..."
+                                    className="w-full max-h-40 py-4 pl-5 pr-5 bg-transparent text-white text-lg outline-none resize-none custom-scrollbar"
+                                />
+
+                                {!isGuest && (
+                                    <div className="pb-2 pr-2 shrink-0">
+                                        <div className="relative">
+                                            {showModeMenu && (
+                                                <div className="absolute bottom-full mb-4 right-0 w-56 bg-zinc-800 border border-zinc-700 rounded-2xl shadow-2xl p-2 z-50">
+                                                    <p className="text-zinc-500 text-[10px] font-bold px-3 py-2 uppercase tracking-wider">Active modes</p>
+                                                    {modes.map((m) => (
+                                                        <div key={m.id} onClick={() => { setSelectedMode(m); setShowModeMenu(false); }}
+                                                            className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer duration-200 ${selectedMode?.id === m.id ? 'bg-blue-600/20 text-blue-400' : 'text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}>
+                                                            <img className="w-5 h-5" src={modeConfig[m.name]?.icon || './default_mode.png'} alt="" />
+                                                            <div className="flex flex-col text-left">
+                                                                <span className="text-sm font-bold">{modeConfig[m.name]?.title || m.name}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div onClick={() => setShowModeMenu(!showModeMenu)}
+                                                className={`w-10 h-10 rounded-full flex justify-center items-center cursor-pointer duration-200 ${showModeMenu ? 'bg-blue-600' : 'bg-zinc-700 hover:bg-zinc-600'}`}>
+                                                <img className="w-6" src={modeConfig[selectedMode?.name]?.icon || './mode.png'} alt="mode" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* SEND BUTTON */}
+                            <div
+                                onClick={handleSend}
+                                className={`w-12 h-12 rounded-full flex justify-center items-center cursor-pointer duration-200 shrink-0 mb-1 ${isLoading ? 'bg-zinc-700' : 'bg-blue-600 hover:bg-blue-500'
+                                    }`}
+                            >
                                 <img className={`w-6 ${isLoading ? 'opacity-20' : ''}`} src="./send.png" alt="send" />
                             </div>
                         </div>
@@ -336,9 +410,9 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                     <div className="bg-zinc-800 rounded-lg p-6 max-w-md w-full mx-4 border border-zinc-700">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                                <img 
-                                    src="./crisis.png" 
-                                    alt="Warning" 
+                                <img
+                                    src="./crisis.png"
+                                    alt="Warning"
                                     className="w-7 h-7"
                                 />
                             </div>
@@ -346,35 +420,35 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                                 Message Limit Reached
                             </h3>
                         </div>
-                        
+
                         <p className="text-zinc-400 mb-6">
-                            Guest users are limited to <span className="text-yellow-400 font-bold">10 messages</span>. 
+                            Guest users are limited to <span className="text-yellow-400 font-bold">10 messages</span>.
                             Please login or register to ask more questions!
                         </p>
-                        
+
                         <div className="flex gap-3">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setShowMessageLimitModal(false);
                                     onSelect('Login');
                                     onChatSelect(null);
-                                }} 
+                                }}
                                 className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer font-bold"
                             >
                                 Login
                             </button>
-                            <button 
+                            <button
                                 onClick={() => {
                                     setShowMessageLimitModal(false);
                                     onSelect('Register');
                                     onChatSelect(null);
-                                }} 
+                                }}
                                 className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 cursor-pointer font-bold"
                             >
                                 Register
                             </button>
-                            <button 
-                                onClick={() => setShowMessageLimitModal(false)} 
+                            <button
+                                onClick={() => setShowMessageLimitModal(false)}
                                 className="px-4 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600 cursor-pointer"
                             >
                                 Cancel
@@ -383,7 +457,7 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                     </div>
                 </div>
             )
-                
+
             }
         </>
 
