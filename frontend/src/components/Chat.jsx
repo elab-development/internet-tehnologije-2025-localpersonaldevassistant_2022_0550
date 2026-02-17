@@ -326,7 +326,7 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
 
                                     <div
                                         onClick={() => !selectedFile && fileInputRef.current.click()}
-                                        className={`w-12 h-12 rounded-full flex justify-center items-center shrink-0 duration-200 ${selectedFile
+                                        className={`w-15 h-15 rounded-full flex justify-center items-center shrink-0 duration-200 ${selectedFile
                                             ? 'bg-zinc-800 opacity-50 cursor-not-allowed'
                                             : 'bg-zinc-800 cursor-pointer hover:bg-zinc-700'
                                             }`}
@@ -381,7 +381,7 @@ export default function Chat({ chatId, onChatUpdated, onChatDeleted, isGuest, ch
                             {/* SEND BUTTON */}
                             <div
                                 onClick={handleSend}
-                                className={`w-12 h-12 rounded-full flex justify-center items-center cursor-pointer duration-200 shrink-0 mb-1 ${isLoading ? 'bg-zinc-700' : 'bg-blue-600 hover:bg-blue-500'
+                                className={`w-13 h-13 rounded-full flex justify-center items-center cursor-pointer duration-200 shrink-0 mb-1 ${isLoading ? 'bg-zinc-700' : 'bg-blue-600 hover:bg-blue-500'
                                     }`}
                             >
                                 <img className={`w-6 ${isLoading ? 'opacity-20' : ''}`} src="./send.png" alt="send" />
