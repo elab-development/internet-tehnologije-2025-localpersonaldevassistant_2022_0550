@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from typing import List
 from app.database import get_db
 from app.models.user import User
@@ -23,37 +23,57 @@ def get_admin_user(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-# Ovo cu mozda koristiti za config kasnije
 @router.get("/stats")
-def get_system_stats(
-    db: Session = Depends(get_db),
-    admin: User = Depends(get_admin_user)
+def get_admin_dashboard_stats(
+    db: Session = Depends(get_db), 
+    admin: User = Depends(get_admin_user) 
 ):
+   
+    total_users = db.query(func.count(User.id)).scalar() or 0
+    total_chats = db.query(func.count(Chat.id)).scalar() or 0
     
-    total_users = db.query(func.count(User.id)).scalar()
-    total_chats = db.query(func.count(Chat.id)).scalar()
-    total_messages = 0 
     
-    users_by_role = (
-        db.query(User.role_id, func.count(User.id))
-        .group_by(User.role_id)
-        .all()
-    )
+    avg_conv = db.execute(text("""
+        SELECT ROUND(CAST(COUNT(m.id) AS FLOAT) / NULLIF(COUNT(DISTINCT c.id), 0),1)
+        FROM chats c
+        LEFT JOIN messages m ON c.id = m.chat_id
+    """)).scalar() or 0
     
-    role_breakdown = {role: count for role, count in users_by_role}
+   
+    modes_raw = db.execute(text("""
+        SELECT COALESCE(mo.name, 'Default/Nepoznato'), COUNT(m.id) as count
+        FROM messages m 
+        LEFT JOIN modes mo ON m.mode_id = mo.id
+        GROUP BY mo.id, mo.name
+    """)).fetchall()
+    
+   
+    top_users_raw = db.execute(text("""
+        SELECT u.email, COUNT(m.id) as msg_count
+        FROM users u
+        JOIN chats c ON u.id = c.user_id
+        JOIN messages m ON c.id = m.chat_id
+        WHERE u.role_id != 'guest'
+        GROUP BY u.id, u.email 
+        ORDER BY msg_count DESC 
+        LIMIT 5
+    """)).fetchall()
+    
+    
+    roles_raw = db.execute(text("""
+        SELECT role_id, COUNT(*) FROM users GROUP BY role_id
+    """)).fetchall()
     
     return {
-        "total_users": total_users,
-        "total_chats": total_chats,
-        "total_messages": total_messages,
-        "users_by_role": {
-            "admin": role_breakdown.get("admin", 0),
-            "standard_user": role_breakdown.get("standard_user", 0),
-            "guest": role_breakdown.get("guest", 0),
-        }
+        "summary": {
+            "total_users": total_users,
+            "total_chats": total_chats,
+            "avg_chat_length": avg_conv
+        },
+        "modes": [["Mode", "Count of message"]] + [[r[0], r[1]] for r in modes_raw],
+        "top_users": [["User", "Count of message"]] + [[r[0], r[1]] for r in top_users_raw],
+        "roles": [["Role", "Number"]] + [[r[0], r[1]] for r in roles_raw]
     }
-
-
 
 
 # Lista svih korisnika (bez guest-ova)
@@ -145,3 +165,10 @@ def update_user_role(
     db.refresh(user)
     
     return user
+
+
+
+from sqlalchemy import text
+
+
+

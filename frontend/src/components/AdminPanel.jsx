@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AdminUsers from './AdminUsers';
 import AdminConfig from './AdminConfig';
+import AdminStats from './AdminStats';
 
 export default function AdminPanel({ onBackToChats }) {
     const [activeTab, setActiveTab] = useState('users');
@@ -10,6 +11,7 @@ export default function AdminPanel({ onBackToChats }) {
         
         { id: 'users', label: ' Users', icon:'./multi-user.png', component: AdminUsers },
         { id: 'config', label: ' Config',icon:'./settings.png', component: AdminConfig },
+        { id: 'stats', label:' Stats', icon:'./stats.png',component: AdminStats}
     ];
 
     const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component;
