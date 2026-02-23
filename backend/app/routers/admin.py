@@ -23,7 +23,7 @@ def get_admin_user(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.get("/stats")
+@router.get("/stats", summary="Administratorska statistika", description="Generiše detaljan izveštaj o broju korisnika, četova, prosečnoj dužini razgovora i najaktivnijim korisnicima.")
 def get_admin_dashboard_stats(
     db: Session = Depends(get_db), 
     admin: User = Depends(get_admin_user) 
@@ -77,7 +77,7 @@ def get_admin_dashboard_stats(
 
 
 # Lista svih korisnika (bez guest-ova)
-@router.get("/users", response_model=List[UserAdminResponse])
+@router.get("/users", response_model=List[UserAdminResponse], summary="Lista svih korisnika", description="Vraća listu svih registrovanih korisnika. Guest nalozi su isključeni iz rezultata.")
 def get_all_users(
     db: Session = Depends(get_db),
     admin: User = Depends(get_admin_user)
@@ -88,7 +88,7 @@ def get_all_users(
 
 
 #  Ne može brisati admin-e
-@router.delete("/users/{user_id}")
+@router.delete("/users/{user_id}", summary="Brisanje korisnika", description="Trajno briše korisnika iz baze. Admin ne može obrisati samog sebe niti druge administratore.")
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
@@ -127,7 +127,7 @@ def delete_user(
 
 
 #  Može menjati samo standard_user
-@router.patch("/users/{user_id}/role", response_model=UserAdminResponse)
+@router.patch("/users/{user_id}/role", response_model=UserAdminResponse, summary="Promena uloge korisnika", description="Omogućava promenu uloge korisnika (npr. iz standard_user u admin). Dozvoljeno samo za obične korisnike.")
 def update_user_role(
     user_id: int,
     role_data: UpdateUserRoleRequest,

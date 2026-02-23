@@ -25,7 +25,7 @@ router = APIRouter(
 
 
 
-@router.post("/register", response_model=UserRegisterResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserRegisterResponse, status_code=status.HTTP_201_CREATED, summary="Registracija novog korisnika", description="Kreira novi korisnički nalog, hešuje lozinku i dodeljuje podrazumevanu ulogu 'standard_user'.")
 def register(
     request: UserRegisterRequest,
     db: Session = Depends(get_db)
@@ -64,7 +64,7 @@ def register(
 
 
 
-@router.post("/login", response_model=UserLoginResponse)
+@router.post("/login", response_model=UserLoginResponse, summary="Prijava na sistem", description="Autentifikuje korisnika i generiše JWT (Bearer) token za pristup zaštićenim rutama.")
 def login(
     request: UserLoginRequest,
     db: Session = Depends(get_db)
@@ -111,7 +111,7 @@ def login(
 
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse, summary="Podaci o trenutnom korisniku", description="Vraća profilne informacije trenutno ulogovanog korisnika na osnovu JWT tokena.")
 def get_me(
     current_user: User = Depends(get_current_user)
 ):

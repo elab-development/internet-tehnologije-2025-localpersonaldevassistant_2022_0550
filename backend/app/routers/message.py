@@ -17,7 +17,7 @@ from app.utils.memory import memory_manager, classify_memory_scope
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
-@router.post("/send", response_model=MessageResponse)
+@router.post("/send", response_model=MessageResponse, summary="Slanje poruke sa memorijom", description="Glavna ruta za AI komunikaciju. Podržava slanje PDF-a, klasifikaciju memorije u ChromaDB i generisanje RAG odgovora.")
 async def send_message(
     chat_id: int = Form(...),
     content: str = Form(...),
@@ -100,11 +100,11 @@ async def send_message(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/modes")
+@router.get("/modes", summary="Dostupni AI režimi", description="Vraća listu svih modova rada (npr. 'Doktor', 'Programer') sa njihovim sistemskim instrukcijama.")
 def fetch_modes(db: Session = Depends(get_db)):
     return db.query(Mode).all()
 
-@router.post("/send-anonymous")
+@router.post("/send-anonymous", summary="Anonimni čet (Guest)", description="Ograničena ruta za posetioce bez naloga. Ne podržava memoriju niti slanje fajlova.")
 async def send_message_anonymous(
     content: str = Body(...),
     mode_id: int = Body(default=4),
