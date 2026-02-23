@@ -1,0 +1,15 @@
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./backend/chroma_data:/app/chroma_data
+      - ./backend/uploads:/app/uploads
+    environment:
+      - DATABASE_URL=sqlite:///./app.db
+      - OLLAMA_HOST=http://host.docker.internal:11434 # Povezivanje sa Ollama na lokalnom racunaru
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
