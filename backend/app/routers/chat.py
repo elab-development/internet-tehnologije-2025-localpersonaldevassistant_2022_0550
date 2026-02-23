@@ -20,7 +20,7 @@ router = APIRouter(
 class ChatUpdate(BaseModel):
     title: str
 
-@router.post("/create", response_model=ChatResponse)
+@router.post("/create", response_model=ChatResponse, summary="Kreiranje novog četa", description="Inicijalizuje novu sesiju razgovora za ulogovanog korisnika.")
 def create_chat(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -39,7 +39,7 @@ def create_chat(
 
     return new_chat
 
-@router.get("/get-all", response_model=List[ChatResponse])
+@router.get("/get-all", response_model=List[ChatResponse], summary="Istorija svih četova", description="Vraća listu svih sesija razgovora trenutnog korisnika, poređanih od najnovijih.")
 def get_all_user_chats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -53,7 +53,7 @@ def get_all_user_chats(
 
     return chats
 
-@router.get("/{chat_id}", response_model=ChatResponse)
+@router.get("/{chat_id}", response_model=ChatResponse, summary="Detalji jednog četa", description="Vraća punu istoriju poruka za određeni čet, uključujući i metapodatke o fajlovima.")
 def get_chat_by_id(
     chat_id: int, 
     db: Session = Depends(get_db),
@@ -76,7 +76,7 @@ def get_chat_by_id(
         
     return chat
 
-@router.patch("/{chat_id}", response_model=ChatResponse)
+@router.patch("/{chat_id}", response_model=ChatResponse, summary="Promena naslova četa", description="Ažurira naziv sesije razgovora (npr. preimenovanje 'New chat' u smisleniji naslov).")
 def update_chat_title(
     chat_id: int,
     update_data: ChatUpdate,
@@ -94,7 +94,7 @@ def update_chat_title(
     db.refresh(chat)
     return chat
 
-@router.delete("/{chat_id}")
+@router.delete("/{chat_id}", summary="Brisanje četa", description="Trajno briše čet, sve njegove poruke i reference na dokumente iz baze podataka.")
 def delete_chat(
     chat_id: int,
     db: Session = Depends(get_db),
