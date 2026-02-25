@@ -1,8 +1,10 @@
+
 import chromadb # type: ignore
 from chromadb.utils import embedding_functions # type: ignore
 import uuid
 from datetime import datetime
 import ollama
+from config import get_config;
 
 ef = embedding_functions.DefaultEmbeddingFunction()
 
@@ -14,13 +16,15 @@ class MemoryManager:
             embedding_function=ef
         )
 
-    def add_memory(self, user_id: int, chat_id: int, text: str, scope: str):
+    def add_memory(self, user_id: int, chat_id: int, text: str, answer: str, scope: str):
         if scope == "ignore":
             return
         
+        combined_text = f"User asked: {text}\nAssistant answered: {answer}"
+        
         self.collection.add(
             ids=[str(uuid.uuid4())],
-            documents=[text],
+            documents=[combined_text],
             metadatas=[{
                 "user_id": user_id,
                 "chat_id": chat_id,
@@ -29,7 +33,7 @@ class MemoryManager:
             }]
         )
 
-    def recall_memory(self, user_id: int, chat_id: int, query: str, limit: int = 5):
+    def recall_memory(self, user_id: int, chat_id: int, query: str, limit: int = 2):
         results = self.collection.query(
             query_texts=[query],
             n_results=limit,
@@ -47,13 +51,12 @@ class MemoryManager:
 
 memory_manager = MemoryManager()
 
-
 async def classify_memory_scope(content: str) -> str:
     prompt = f"""
     Analyze the following user message and classify it into one of three categories:
-    1. 'global' - If the message contains personal info about the user, their preferences, or how they want to be addressed.
-    2. 'conversation' - If the message is a regular question, factual inquiry, or specific to the current topic.
-    3. 'ignore' - If it's a greeting (hi, hello), a short acknowledgement (ok, thanks), or nonsensical.
+    1. 'global' - Personal info, preferences, or name.
+    2. 'conversation' - Questions, facts, technical topics.
+    3. 'ignore' - Greetings (hi, hello), small talk (ok, thanks).
 
     Message: "{content}"
     Respond with only one word: global, conversation, or ignore.
@@ -61,10 +64,8 @@ async def classify_memory_scope(content: str) -> str:
     try:
         response = ollama.chat(model='llama3.2:1b', messages=[{'role': 'user', 'content': prompt}])
         result = response['message']['content'].strip().lower()
-        
         for word in ['global', 'conversation', 'ignore']:
-            if word in result:
-                return word
+            if word in result: return word
         return 'conversation'
     except:
         return 'conversation'

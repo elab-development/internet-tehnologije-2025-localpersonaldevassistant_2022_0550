@@ -65,3 +65,40 @@ export const updateUserRole = async (userId, newRole) => {
 
     return await response.json();
 };
+
+
+export const getAIConfig = async () => {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}/admin/ai-config`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch AI config');
+  }
+
+  return await response.json();
+};
+
+
+
+export const updateAIModel = async (modelName) => {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}/admin/ai-config?model_name=${modelName}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update AI model');
+  }
+
+  return await response.json();
+};

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from typing import List
@@ -6,12 +6,18 @@ from app.database import get_db
 from app.models.user import User
 from app.models.chat import Chat
 from app.schemas.admin import UserAdminResponse, UpdateUserRoleRequest
-from app.utils.deps import get_current_user
+from app.utils.deps import get_current_user,get_current_admin_user
+from sqlalchemy import text
+
+from config import update_config, get_config;
 
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"]
 )
+
+
+
 
 #  Provera da li je admin
 def get_admin_user(current_user: User = Depends(get_current_user)):
@@ -168,7 +174,32 @@ def update_user_role(
 
 
 
-from sqlalchemy import text
+
+@router.patch("/ai-config")
+def update_ai_model(model_name: str = Query(..., description="llama3.2:1b, mistral, gemma:2b"), 
+                   current_user=Depends(get_current_admin_user)):
+    
+    valid_models = ["llama3.2:1b", "mistral", "gemma:2b"]  
+    if model_name not in valid_models:
+        raise HTTPException(400, f"Model mora biti: {', '.join(valid_models)}")
+    
+    update_config('MODEL_NAME', model_name)
+    return {
+        "success": True, 
+        "message": f"Model promijen na '{model_name}' – aktivan!",
+        "current_model": model_name
+    }
+
+
+@router.get("/ai-config")
+def get_ai_config(current_user=Depends(get_current_admin_user)):
+    
+    return get_config()
+
+
+
+
+
 
 
 

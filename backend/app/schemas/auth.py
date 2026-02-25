@@ -19,23 +19,23 @@ class UserRegisterRequest(BaseModel):
         ..., 
         min_length=2, 
         max_length=100, 
-        example="John Doe",
+        example="Pera Peric",
         description="User's full name"
     )
     password: str = Field(
         ..., 
         min_length=8, 
         max_length=100, 
-        example="SecurePass123!",
+        example="peraperic123",
         description="Password (min 8 characters)"
     )
     
     class Config:
         json_schema_extra = {
             "example": {
-                "email": "john.doe@example.com",
-                "full_name": "John Doe",
-                "password": "SecurePass123!"
+                "email": "peraperic@gmail.com",
+                "full_name": "Pera Peric",
+                "password": "peraperic123"
             }
         }
 
@@ -68,15 +68,15 @@ class UserLoginRequest(BaseModel):
     )
     password: str = Field(
         ..., 
-        example="SecurePass123!",
+        example="peraperic123",
         description="User's password"
     )
     
     class Config:
         json_schema_extra = {
             "example": {
-                "email": "john.doe@example.com",
-                "password": "SecurePass123!"
+                "email": "peraperic@example.com",
+                "password": "peraperic123"
             }
         }
 
