@@ -14,10 +14,12 @@ import ollama
 from app.models.document import Document
 from app.utils.deps import get_current_user
 from app.utils.memory import memory_manager, classify_memory_scope
+from config import get_config;
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
-@router.post("/send", response_model=MessageResponse, summary="Slanje poruke sa memorijom", description="Glavna ruta za AI komunikaciju. Podržava slanje PDF-a, klasifikaciju memorije u ChromaDB i generisanje RAG odgovora.")
+
+@router.post("/send", response_model=MessageResponse)
 async def send_message(
     chat_id: int = Form(...),
     content: str = Form(...),
@@ -26,13 +28,20 @@ async def send_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    config = get_config()
+    model_name = config['MODEL_NAME']
+    ollama_url = config['OLLAMA_URL']
+    print(f"Config: model={model_name}, url={ollama_url}")
     file_context = ""
     new_doc = None
 
     scope = await classify_memory_scope(content)
-
     past_memories = memory_manager.recall_memory(current_user.id, chat_id, content)
-    memory_context = "\n".join(past_memories) if past_memories else "No previous relevant memory."
+    
+    recent_db_messages = db.query(Message).filter(Message.chat_id == chat_id).order_by(Message.id.desc()).limit(5).all()
+    short_term_history = []
+    for m in reversed(recent_db_messages):
+        short_term_history.append({"role": m.role, "content": m.content})
 
     if file and file.content_type == "application/pdf":
         try:
@@ -40,8 +49,7 @@ async def send_message(
             pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
             for page in pdf_reader.pages:
                 text = page.extract_text()
-                if text:
-                    file_context += text
+                if text: file_context += text
             
             new_doc = Document(
                 title=file.filename,
@@ -49,58 +57,49 @@ async def send_message(
                 file_type=file.content_type,
                 file_size=len(pdf_content)
             )
-            
-            if file_context:
-                memory_manager.add_memory(current_user.id, chat_id, f"Document summary ({file.filename}): {file_context[:300]}", "conversation")
-                
         except Exception as e:
             print(f"PDF Error: {e}")
 
     db_mode = db.query(Mode).filter(Mode.id == mode_id).first()
-    system_instructions = db_mode.description if db_mode else "You are a helpful AI assistant."
+    mode_instructions = db_mode.description if db_mode else "You are a helpful AI assistant."
     
-    final_prompt = f"""
-    [PAST MEMORY]
-    {memory_context}
+    memory_string = "\n".join(past_memories) if past_memories else "None"
+    system_content = f"""{mode_instructions}
+    
+    Use the following long-term memory only if relevant to the user's current question:
+    {memory_string}
 
-    [DOCUMENT CONTEXT]
+    Context from uploaded document:
     {file_context if file_context else "No document uploaded."}
-
-    [USER QUESTION]
-    {content}
     """
 
-    user_msg = Message(chat_id=chat_id, content=content, role="user", mode_id=mode_id)
-    if new_doc:
-        user_msg.documents.append(new_doc)
-    
-    db.add(user_msg)
-    db.commit()
-    db.refresh(user_msg)
+    messages = [{"role": "system", "content": system_content}]
+    messages.extend(short_term_history)
+    messages.append({"role": "user", "content": content})
 
     try:
-        response = ollama.chat(model='llama3.2:1b', messages=[
-            {'role': 'system', 'content': system_instructions},
-            {'role': 'user', 'content': final_prompt},
-        ])
-        
+        response = ollama.chat(model=model_name, messages=messages)
         ai_content = response['message']['content']
+
+        user_msg = Message(chat_id=chat_id, content=content, role="user", mode_id=mode_id)
+        if new_doc: user_msg.documents.append(new_doc)
+        db.add(user_msg)
         
         ai_msg = Message(chat_id=chat_id, content=ai_content, role="assistant", mode_id=mode_id)
         db.add(ai_msg)
         
-        memory_manager.add_memory(current_user.id, chat_id, content, scope)
+        memory_manager.add_memory(current_user.id, chat_id, content, ai_content, scope)
         
         db.commit()
         db.refresh(ai_msg)
-        
         return ai_msg
 
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/modes", summary="Dostupni AI režimi", description="Vraća listu svih modova rada (npr. 'Doktor', 'Programer') sa njihovim sistemskim instrukcijama.")
+
+@router.get("/modes", summary="Dostupni AI režimi", description="Vraća listu svih modova rada")
 def fetch_modes(db: Session = Depends(get_db)):
     return db.query(Mode).all()
 
