@@ -86,7 +86,7 @@ export default function AdminAIConfig() {
           <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-zinc-800 p-8 rounded-2xl border-4 max-w-md mx-4 shadow-2xl">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12  flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12  flex items-center justify-center shrink-0">
                   <img
                     src="./crisis.png"
                     alt="Warning"
